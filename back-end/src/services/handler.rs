@@ -27,6 +27,7 @@ pub fn routes(store: Store, docker: Docker) -> Router {
   Router::new()
     .route("/services", get(list).post(create))
     .route("/services/status", get(status))
+    .route("/services/order", put(reorder))
     .route("/services/{id}", put(update).delete(delete))
     .route("/probe/{port}", get(probe_port))
     .with_state(store)
@@ -51,6 +52,14 @@ async fn update(
   Json(input): Json<ServiceInput>,
 ) -> Result<Json<Service>, AppError> {
   Ok(Json(store.update(id, input.validate()?)?))
+}
+
+async fn reorder(
+  State(store): State<Store>,
+  Json(ids): Json<Vec<u64>>,
+) -> Result<StatusCode, AppError> {
+  store.reorder(&ids)?;
+  Ok(StatusCode::NO_CONTENT)
 }
 
 async fn delete(State(store): State<Store>, Path(id): Path<u64>) -> Result<StatusCode, AppError> {
@@ -253,5 +262,31 @@ mod tests {
       call(&app, "POST", "/services/9/start", Value::Null).await.0,
       404
     );
+  }
+
+  #[tokio::test]
+  async fn reordena_e_recusa_lista_diferente() {
+    let temp = Temp::new("order");
+    let app = app(&temp);
+    for _ in 0..3 {
+      call(&app, "POST", "/services", jellyfin()).await;
+    }
+    let order = json!([3, 1, 2]);
+    assert_eq!(call(&app, "PUT", "/services/order", order).await.0, 204);
+    let ids: Vec<u64> = Store::open(temp.file())
+      .unwrap()
+      .list()
+      .iter()
+      .map(|s| s.id)
+      .collect();
+    assert_eq!(ids, [3, 1, 2]);
+    for wrong in [
+      json!([1, 2]),
+      json!([1, 1, 2]),
+      json!([1, 2, 9]),
+      json!([1, 2, 3, 3]),
+    ] {
+      assert_eq!(call(&app, "PUT", "/services/order", wrong).await.0, 409);
+    }
   }
 }
