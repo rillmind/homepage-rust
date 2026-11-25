@@ -1,8 +1,8 @@
 use super::models::{Service, ServiceInput};
-use crate::error::AppError;
+use crate::{error::AppError, storage};
 use std::{
-  fs, io,
-  path::{Path, PathBuf},
+  io,
+  path::PathBuf,
   sync::{Arc, Mutex, MutexGuard},
 };
 
@@ -14,13 +14,8 @@ pub struct Store {
 }
 
 impl Store {
-  /// Arquivo inválido é erro, para não sobrescrever os dados com uma lista vazia.
   pub fn open(path: PathBuf) -> io::Result<Self> {
-    let services = match fs::read(&path) {
-      Ok(bytes) => serde_json::from_slice(&bytes)?,
-      Err(err) if err.kind() == io::ErrorKind::NotFound => Vec::new(),
-      Err(err) => return Err(err),
-    };
+    let services = storage::load(&path)?;
     Ok(Self {
       path: Arc::new(path),
       services: Arc::new(Mutex::new(services)),
@@ -71,13 +66,7 @@ impl Store {
 
   /// Só troca a lista em memória depois que o arquivo foi gravado.
   fn commit(&self, current: &mut Vec<Service>, next: Vec<Service>) -> io::Result<()> {
-    if let Some(dir) = self.path.parent().filter(|dir| *dir != Path::new("")) {
-      fs::create_dir_all(dir)?;
-    }
-    // Grava ao lado e renomeia, para uma queda no meio não corromper o arquivo.
-    let temp = self.path.with_extension("json.tmp");
-    fs::write(&temp, serde_json::to_vec_pretty(&next)?)?;
-    fs::rename(&temp, &*self.path)?;
+    storage::save(&self.path, &next)?;
     *current = next;
     Ok(())
   }

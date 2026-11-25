@@ -1,9 +1,11 @@
+mod auth;
 mod error;
 mod pc_info;
 mod services;
+mod storage;
 
-use axum::Router;
-use std::{env, io};
+use axum::{Router, middleware};
+use std::{env, io, path::PathBuf};
 use tokio::{
   net::TcpListener,
   signal::unix::{SignalKind, signal},
@@ -11,13 +13,20 @@ use tokio::{
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-  // Só local por padrão: o acesso de fora passa pelo /api do front.
+  // Só local por padrão: o acesso de fora passa pelo nginx do front.
   let addr = env::var("BIND_ADDR").unwrap_or_else(|_| "127.0.0.1:2306".into());
-  let data = env::var("DATA_PATH").unwrap_or_else(|_| "data/services.json".into());
+  let data = PathBuf::from(env::var("DATA_DIR").unwrap_or_else(|_| "data".into()));
+
+  let auth = auth::Auth::open(data.join("auth.json"))?;
 
   let app = Router::new()
     .merge(pc_info::routes())
-    .merge(services::routes(services::Store::open(data.into())?));
+    .merge(services::routes(services::Store::open(
+      data.join("services.json"),
+    )?))
+    .layer(middleware::from_fn_with_state(auth.clone(), auth::require))
+    .merge(auth::routes(auth))
+    .layer(middleware::from_fn(auth::same_origin));
 
   let listener = TcpListener::bind(&addr).await?;
   println!("Servidor rodando em http://{addr}");

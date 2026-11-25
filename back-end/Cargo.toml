@@ -4,13 +4,21 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+argon2 = { version = "0.5", features = ["std"] }
 axum = "0.8"
 chrono = "0.4"
+futures-util = "0.3"
 if-addrs = "0.15"
-rustix = { version = "1", features = ["fs"] }
+image = { version = "0.25", default-features = false, features = ["gif", "jpeg", "png", "webp"] }
+rustix = { version = "1", features = ["fs", "process"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "signal", "sync", "time"] }
-
-[dev-dependencies]
+serde_yaml_ng = "0.10"
+sha2 = "0.10"
+tokio = { version = "1", features = ["fs", "io-util", "macros", "net", "rt-multi-thread", "signal", "sync", "time"] }
 tower = { version = "0.5", features = ["util"] }
+tower-http = { version = "0.7", features = ["fs"] }
+
+[profile.release]
+lto = "thin"
+strip = true
