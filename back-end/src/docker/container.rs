@@ -34,6 +34,8 @@ pub struct ContainerView {
   running: bool,
   /// Criado pelo Docker Compose, então pode ser atualizado.
   compose: bool,
+  /// É o contêiner da própria homepage, que não pode se reiniciar.
+  own: bool,
 }
 
 #[derive(Serialize)]
@@ -134,9 +136,23 @@ fn now() -> i64 {
     .map_or(0, |time| time.as_secs() as i64)
 }
 
-/// O próprio contêiner aparece nos caminhos montados pelo Docker dentro dele.
-fn is_self(id: &str) -> bool {
-  !id.is_empty() && fs::read_to_string("/proc/self/mountinfo").is_ok_and(|info| info.contains(id))
+/// O Docker monta estes arquivos a partir da pasta do contêiner, que tem o id no caminho.
+/// Só eles servem: com o `/` da máquina montado, os outros contêineres também aparecem no
+/// mountinfo.
+fn owns(mountinfo: &str, id: &str) -> bool {
+  !id.is_empty()
+    && mountinfo.lines().any(|line| {
+      let fields: Vec<&str> = line.split(' ').collect();
+      let (Some(source), Some(target)) = (fields.get(3), fields.get(4)) else {
+        return false;
+      };
+      matches!(*target, "/etc/hostname" | "/etc/hosts" | "/etc/resolv.conf")
+        && source.split('/').any(|part| part == id)
+    })
+}
+
+fn is_self(container: &Value) -> bool {
+  fs::read_to_string("/proc/self/mountinfo").is_ok_and(|info| owns(&info, text(container, "/Id")))
 }
 
 impl Docker {
@@ -202,6 +218,7 @@ impl Docker {
       name: name(&container),
       running: is_running(&container),
       compose: Project::of(&container).is_some(),
+      own: is_self(&container),
     })
   }
 
@@ -220,7 +237,7 @@ impl Docker {
     if action == Action::Update {
       return self.update(&main, service.port).await;
     }
-    if is_self(&id) {
+    if is_self(&main) {
       return Err(AppError::Conflict(
         "Este é o contêiner da própria homepage, reinicie pelo CasaOS ou pelo terminal",
       ));
@@ -273,7 +290,7 @@ impl Docker {
     let since = now();
 
     project.pull(&self.client).await?;
-    if is_self(text(main, "/Id")) {
+    if is_self(main) {
       // Este processo vai ser trocado: deixa o up rodando sozinho e responde antes.
       project.up_later(&self.client).await?;
       return Ok(Outcome {
@@ -435,5 +452,16 @@ mod tests {
       "com.docker.compose.depends_on": "a:service_started:false",
     } })];
     assert_eq!(start_order(&all, &all[0]).len(), 1);
+  }
+
+  #[test]
+  fn so_reconhece_a_si_mesmo_com_a_maquina_montada() {
+    let info = "1 0 8:1 /var/lib/docker/containers/eu/hostname /etc/hostname rw - ext4 a rw\n\
+                2 0 0:9 / /host/var/lib/docker/containers/outro/mounts/shm rw - tmpfs shm rw\n\
+                3 0 8:1 /var/lib/docker/containers/outro/hosts /host/etc/hosts rw - ext4 a rw\n";
+    assert!(owns(info, "eu"));
+    assert!(!owns(info, "outro"));
+    assert!(!owns(info, "e"));
+    assert!(!owns(info, ""));
   }
 }
