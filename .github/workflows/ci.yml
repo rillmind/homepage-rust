@@ -1,7 +1,7 @@
 name: CI
 
-# PR: testes e build da imagem, sem publicar.
-# Push na main ou tag v*: o mesmo e, se tudo passar, publica no Docker Hub.
+# PR: só os testes. O cache da imagem de um PR não serve para a main.
+# Push na main ou tag v*: testes e imagem em paralelo e, se tudo passar, publica.
 on:
   push:
     branches: [main]
@@ -52,6 +52,7 @@ jobs:
 
   # Em paralelo com os testes, para a publicação só precisar do cache.
   image:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
