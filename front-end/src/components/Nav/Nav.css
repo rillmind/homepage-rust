@@ -1,7 +1,8 @@
 .nav {
-  display: flex;
+  /* Lados com a mesma largura deixam o relógio exatamente no centro. */
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   grid-column: 1 / -1;
-  flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem 1.25rem;
 
@@ -9,6 +10,18 @@
   border-bottom: 1px solid var(--ctp-surface0);
 
   background-color: var(--ctp-mantle);
+}
+
+.navSide {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+
+  min-width: 0;
+}
+
+.navActions {
+  justify-content: flex-end;
 }
 
 .navBrand {
@@ -56,7 +69,8 @@
 }
 
 .navStatus {
-  margin-right: auto;
+  flex: none;
+
   border-radius: 999px;
 }
 
@@ -112,6 +126,30 @@ kbd {
 @media (max-width: 1100px) {
   .navSearch :is(span, kbd),
   .navSettings span {
+    display: none;
+  }
+}
+
+@media (max-width: 1200px) {
+  .navUptime {
+    display: none;
+  }
+}
+
+@media (max-width: 1000px) {
+  .nav {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .navClock {
+    grid-row: 2;
+    grid-column: 1 / -1;
+    justify-self: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .navStatus {
     display: none;
   }
 }

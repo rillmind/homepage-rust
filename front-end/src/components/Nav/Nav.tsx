@@ -15,15 +15,19 @@ export default function Nav({ title, stats, onSearch, onSettings }: Props) {
 
   return (
     <header className="nav">
-      <div className="navBrand">
-        <span className="navLogo">{icons.server}</span>
-        <h1>{title}</h1>
-      </div>
+      <div className="navSide">
+        <div className="navBrand">
+          <span className="navLogo">{icons.server}</span>
+          <h1>{title}</h1>
+        </div>
 
-      <div className="navStatus">
-        <span className={stats ? "dot online" : "dot offline"} />
-        {stats ? (stats.ip ?? "Sem rede") : "Sem conexão"}
-        {uptime != null && <span>Uptime: {formatUptime(uptime)}</span>}
+        <div className="navStatus">
+          <span className={stats ? "dot online" : "dot offline"} />
+          {stats ? (stats.ip ?? "Sem rede") : "Sem conexão"}
+          {uptime != null && (
+            <span className="navUptime">Uptime: {formatUptime(uptime)}</span>
+          )}
+        </div>
       </div>
 
       <div className="navClock">
@@ -31,17 +35,19 @@ export default function Nav({ title, stats, onSearch, onSettings }: Props) {
         {stats ? `${stats.date} ${stats.time}` : "--/--/---- --:--"}
       </div>
 
-      <button className="navSearch" onClick={onSearch} aria-label="Pesquisar">
-        {icons.search} <span>Quick search</span> <kbd>Ctrl K</kbd>
-      </button>
+      <div className="navSide navActions">
+        <button className="navSearch" onClick={onSearch} aria-label="Pesquisar">
+          {icons.search} <span>Quick search</span> <kbd>Ctrl K</kbd>
+        </button>
 
-      <button
-        className="button navSettings"
-        onClick={onSettings}
-        aria-label="Configurações"
-      >
-        {icons.settings} <span>Configurações</span>
-      </button>
+        <button
+          className="button navSettings"
+          onClick={onSettings}
+          aria-label="Configurações"
+        >
+          {icons.settings} <span>Configurações</span>
+        </button>
+      </div>
     </header>
   );
 }
