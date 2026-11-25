@@ -21,6 +21,7 @@ pub fn routes(store: Store, docker: Docker) -> Router {
     .route("/services/{id}/container", get(container))
     .route("/services/{id}/start", post(start))
     .route("/services/{id}/restart", post(restart))
+    .route("/services/{id}/update", post(update_container))
     .with_state((store.clone(), docker));
 
   Router::new()
@@ -100,6 +101,16 @@ async fn restart(
 ) -> Result<Json<Outcome>, AppError> {
   docker
     .run(store.get(id)?.input, Action::Restart)
+    .await
+    .map(Json)
+}
+
+async fn update_container(
+  State((store, docker)): Containers,
+  Path(id): Path<u64>,
+) -> Result<Json<Outcome>, AppError> {
+  docker
+    .run(store.get(id)?.input, Action::Update)
     .await
     .map(Json)
 }
