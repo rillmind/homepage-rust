@@ -14,6 +14,8 @@ pub enum AppError {
   Conflict(&'static str),
   TooMany(&'static str),
   NotFound,
+  /// Mensagem e, se houver, os detalhes (o log do contêiner).
+  Docker(String, String),
   Io(io::Error),
 }
 
@@ -32,6 +34,7 @@ impl AppError {
       Self::Conflict(message) => (StatusCode::CONFLICT, message),
       Self::TooMany(message) => (StatusCode::TOO_MANY_REQUESTS, message),
       Self::NotFound => (StatusCode::NOT_FOUND, "Não encontrado"),
+      Self::Docker(..) => (StatusCode::BAD_GATEWAY, "Erro no Docker"),
       Self::Io(err) => match err.kind() {
         ErrorKind::NotFound => (StatusCode::NOT_FOUND, "Não encontrado"),
         ErrorKind::PermissionDenied => (StatusCode::FORBIDDEN, "Sem permissão"),
@@ -60,6 +63,13 @@ impl AppError {
 impl IntoResponse for AppError {
   fn into_response(self) -> Response {
     let (status, message) = self.parts();
+    if let Self::Docker(message, details) = self {
+      return (
+        status,
+        Json(json!({ "error": message, "details": details })),
+      )
+        .into_response();
+    }
     if status == StatusCode::INTERNAL_SERVER_ERROR {
       eprintln!("{self:?}");
     }

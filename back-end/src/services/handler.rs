@@ -3,23 +3,33 @@ use super::{
   probe::{Status, probe},
   store::Store,
 };
-use crate::error::AppError;
+use crate::{
+  docker::{Action, ContainerView, Docker, Outcome},
+  error::AppError,
+};
 use axum::{
   Json, Router,
   extract::{Path, State},
   http::StatusCode,
-  routing::{get, put},
+  routing::{get, post, put},
 };
 use std::collections::BTreeMap;
 use tokio::task::JoinSet;
 
-pub fn routes(store: Store) -> Router {
+pub fn routes(store: Store, docker: Docker) -> Router {
+  let containers = Router::new()
+    .route("/services/{id}/container", get(container))
+    .route("/services/{id}/start", post(start))
+    .route("/services/{id}/restart", post(restart))
+    .with_state((store.clone(), docker));
+
   Router::new()
     .route("/services", get(list).post(create))
     .route("/services/status", get(status))
     .route("/services/{id}", put(update).delete(delete))
     .route("/probe/{port}", get(probe_port))
     .with_state(store)
+    .merge(containers)
 }
 
 async fn list(State(store): State<Store>) -> Json<Vec<Service>> {
@@ -65,9 +75,39 @@ async fn probe_port(Path(port): Path<u16>) -> Json<Status> {
   Json(probe(port).await)
 }
 
+type Containers = State<(Store, Docker)>;
+
+async fn container(
+  State((store, docker)): Containers,
+  Path(id): Path<u64>,
+) -> Result<Json<ContainerView>, AppError> {
+  docker.view(store.get(id)?.input).await.map(Json)
+}
+
+async fn start(
+  State((store, docker)): Containers,
+  Path(id): Path<u64>,
+) -> Result<Json<Outcome>, AppError> {
+  docker
+    .run(store.get(id)?.input, Action::Start)
+    .await
+    .map(Json)
+}
+
+async fn restart(
+  State((store, docker)): Containers,
+  Path(id): Path<u64>,
+) -> Result<Json<Outcome>, AppError> {
+  docker
+    .run(store.get(id)?.input, Action::Restart)
+    .await
+    .map(Json)
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
+  use crate::files::Root;
   use axum::{
     body::{Body, to_bytes},
     http::Request,
@@ -106,6 +146,11 @@ mod tests {
     (status, serde_json::from_slice(&bytes).unwrap_or_default())
   }
 
+  fn app(temp: &Temp) -> Router {
+    let root = Root::new(temp.0.clone(), "");
+    routes(Store::open(temp.file()).unwrap(), Docker::new(root))
+  }
+
   fn jellyfin() -> Value {
     json!({ "name": " Jellyfin ", "protocol": "http", "port": 8096, "category": "Mídia" })
   }
@@ -113,7 +158,7 @@ mod tests {
   #[tokio::test]
   async fn crud_persiste_no_arquivo() {
     let temp = Temp::new("crud");
-    let app = routes(Store::open(temp.file()).unwrap());
+    let app = app(&temp);
 
     let (status, created) = call(&app, "POST", "/services", jellyfin()).await;
     assert_eq!((status, &created["name"]), (201, &json!("Jellyfin")));
@@ -139,13 +184,14 @@ mod tests {
   #[tokio::test]
   async fn rejeita_dados_invalidos() {
     let temp = Temp::new("invalid");
-    let app = routes(Store::open(temp.file()).unwrap());
+    let app = app(&temp);
     for (field, value) in [
       ("name", json!("  ")),
       ("port", json!(0)),
       ("port", json!(70000)),
       ("icon", json!("javascript:alert(1)")),
       ("protocol", json!("ftp")),
+      ("container", json!("../x")),
     ] {
       let mut body = jellyfin();
       body[field] = value;
@@ -169,7 +215,7 @@ mod tests {
   #[tokio::test]
   async fn status_diferencia_porta_aberta_e_fechada() {
     let temp = Temp::new("status");
-    let app = routes(Store::open(temp.file()).unwrap());
+    let app = app(&temp);
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let port = listener.local_addr().unwrap().port();
 
@@ -182,5 +228,19 @@ mod tests {
     drop(listener);
     let (_, offline) = call(&app, "GET", "/services/status", Value::Null).await;
     assert_eq!(offline["1"]["online"], false);
+  }
+
+  #[tokio::test]
+  async fn sem_docker_explica_o_erro() {
+    let temp = Temp::new("nodocker");
+    let app = app(&temp);
+    call(&app, "POST", "/services", jellyfin()).await;
+    let (status, body) = call(&app, "POST", "/services/1/restart", Value::Null).await;
+    assert_eq!(status, 502);
+    assert!(body["error"].as_str().unwrap().contains("Docker"));
+    assert_eq!(
+      call(&app, "POST", "/services/9/start", Value::Null).await.0,
+      404
+    );
   }
 }

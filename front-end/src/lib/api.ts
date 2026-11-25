@@ -1,9 +1,12 @@
 import type {
   AuthStatus,
   CasaApp,
+  Container,
+  ContainerAction,
   Found,
   Job,
   Listing,
+  Outcome,
   Service,
   ServiceInput,
   Stats,
@@ -15,6 +18,16 @@ const BASE = "/homepage-api";
 
 /** Disparado quando a sessão expira. */
 export const SESSION_LOST = "homepage-session-lost";
+
+/** `details` é o log do contêiner, quando há. */
+export class ApiError extends Error {
+  details: string;
+
+  constructor(message: string, details: string) {
+    super(message);
+    this.details = details;
+  }
+}
 
 type Init = { method?: string; body?: unknown; signal?: AbortSignal };
 
@@ -33,7 +46,10 @@ async function request<T>(path: string, init: Init = {}): Promise<T> {
       window.dispatchEvent(new Event(SESSION_LOST));
     }
     const data = await res.json().catch(() => null);
-    throw new Error(data?.error ?? `Erro ${res.status} no servidor`);
+    throw new ApiError(
+      data?.error ?? `Erro ${res.status} no servidor`,
+      data?.details ?? "",
+    );
   }
   const text = await res.text();
   return (text ? JSON.parse(text) : undefined) as T;
@@ -70,6 +86,10 @@ export const saveService = (input: ServiceInput, id?: number) =>
     : request<Service>(`/services/${id}`, { method: "PUT", body: input });
 export const deleteService = (id: number) =>
   request<void>(`/services/${id}`, { method: "DELETE" });
+export const getContainer = (id: number, signal: AbortSignal) =>
+  get<Container>(`/services/${id}/container`, signal);
+export const runContainer = (id: number, action: ContainerAction) =>
+  post<Outcome>(`/services/${id}/${action}`);
 export const probePort = (port: number) => get<Status>(`/probe/${port}`);
 export const getCasaApps = () => get<CasaApp[]>("/casaos/apps");
 

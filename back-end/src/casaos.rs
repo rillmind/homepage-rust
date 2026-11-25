@@ -26,20 +26,54 @@ pub fn routes(root: Root) -> Router {
 
 async fn apps(State(root): State<Root>) -> Result<Json<Vec<App>>, AppError> {
   let apps = blocking(move || {
-    let dir = match root.resolve(APPS) {
-      Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
-      dir => dir?,
-    };
-    let mut apps: Vec<App> = fs::read_dir(root.real(&dir))?
-      .flatten()
-      .filter_map(|entry| fs::read_to_string(entry.path().join("docker-compose.yml")).ok())
-      .filter_map(|text| parse(&text))
+    let mut apps: Vec<App> = composes(&root)?
+      .iter()
+      .filter_map(|text| parse(text))
       .collect();
     apps.sort_by_key(|app| app.name.to_lowercase());
     Ok(apps)
   })
   .await?;
   Ok(Json(apps))
+}
+
+fn composes(root: &Root) -> std::io::Result<Vec<String>> {
+  let dir = match root.resolve(APPS) {
+    Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+    dir => dir?,
+  };
+  Ok(
+    fs::read_dir(root.real(&dir))?
+      .flatten()
+      .filter_map(|entry| fs::read_to_string(entry.path().join("docker-compose.yml")).ok())
+      .collect(),
+  )
+}
+
+/// Projeto e serviço do compose do app instalado que usa a porta. Cobre os que estão na
+/// rede do host, que não publicam portas no Docker.
+pub fn find_by_port(root: &Root, port: u16) -> Option<(String, String)> {
+  composes(root)
+    .ok()?
+    .iter()
+    .filter(|text| parse(text).is_some_and(|app| app.port == port))
+    .find_map(|text| main_service(text))
+}
+
+fn main_service(yaml: &str) -> Option<(String, String)> {
+  let compose: Value = serde_yaml_ng::from_str(yaml).ok()?;
+  let project = compose.get("name")?.as_str()?.to_string();
+  let main = compose.get("x-casaos").and_then(|info| info.get("main"));
+  let service = match main.and_then(Value::as_str) {
+    Some(main) => main,
+    None => compose
+      .get("services")?
+      .as_mapping()?
+      .keys()
+      .next()?
+      .as_str()?,
+  };
+  Some((project, service.to_string()))
 }
 
 /// Texto simples ou um mapa de idiomas.
@@ -98,5 +132,14 @@ mod tests {
     assert_eq!(parse("name: a\nx-casaos: { port_map: '' }"), None);
     assert_eq!(parse("name: a\nservices: {}"), None);
     assert_eq!(parse(": : quebrado ["), None);
+  }
+
+  #[test]
+  fn acha_o_servico_principal() {
+    let yaml = "name: big-bear-plex\nservices: { plex: {}, db: {} }\nx-casaos: { main: plex }\n";
+    let expected = Some(("big-bear-plex".into(), "plex".into()));
+    assert_eq!(main_service(yaml), expected);
+    let yaml = "name: a\nservices: { web: {} }\n";
+    assert_eq!(main_service(yaml), Some(("a".into(), "web".into())));
   }
 }

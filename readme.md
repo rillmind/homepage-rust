@@ -2,6 +2,8 @@
 
 # homepage-rust
 
+<img src="front-end/public/icon-192.png" width="96" alt="">
+
 Página inicial para o meu servidor caseiro: uma tela só com o estado da máquina,
 atalhos e informações do dia a dia, acessível de qualquer dispositivo da rede.
 
@@ -13,6 +15,8 @@ atalhos e informações do dia a dia, acessível de qualquer dispositivo da rede
 [![Catppuccin](https://img.shields.io/badge/tema-Catppuccin-cba6f7?style=flat-square)](https://catppuccin.com)
 
 </div>
+
+![Visão geral](docs/overview.png)
 
 ## A ideia
 
@@ -34,6 +38,7 @@ pessoal, feito do jeito que eu quero usar e também para estudar Rust e React. �
 - Login com usuário único, criado no primeiro acesso
 - CPU, memória, disco, temperatura, fan e rede em tempo real
 - Serviços cadastrados à mão ou importados do CasaOS, com busca, filtros e status da porta
+- Iniciar e reiniciar o contêiner do serviço com o botão direito, com o erro e o log se falhar
 - Gerenciador de arquivos: enviar, baixar, copiar, mover, renomear, lixeira, busca,
   miniaturas, visualização e edição de texto
 - Página Network com todas as interfaces
@@ -73,6 +78,8 @@ container. **No docker, o padrão é root.**
 | GET        | `/stats`           | todos os dados da máquina; `null` é dado ausente  |
 | GET, POST  | `/services`        | lista e cria serviços                             |
 | PUT, DELETE| `/services/{id}`   | edita e exclui                                    |
+| GET        | `/services/{id}/container` | contêiner do serviço e se está rodando    |
+| POST       | `/services/{id}/start` ou `/restart` | inicia ou reinicia o contêiner  |
 | GET        | `/services/status` | status das portas dos serviços, por id            |
 | GET        | `/probe/{porta}`   | testa uma porta da máquina                        |
 | GET        | `/casaos/apps`     | apps instalados pelo CasaOS                       |
@@ -82,6 +89,7 @@ container. **No docker, o padrão é root.**
 
 | Variável       | Onde  | Para quê                                                             |
 | -------------- | ----- | -------------------------------------------------------------------- |
+| `DOCKER_SOCKET` | back | socket do Docker; por padrão, `<FILES_ROOT>/run/docker.sock`         |
 | `CPU_FAN_PATH` | back  | arquivo `fanN_input` da CPU, se as fans da placa não tiverem label   |
 | `DISK_PATH`    | back  | caminho no disco a medir; por padrão, `/`                            |
 | `DATA_DIR`     | back  | pasta dos dados; por padrão, `data`                                  |
@@ -152,7 +160,8 @@ Para atualizar, rode o `down` antes do `up --build -d`: com o container no ar, o
 ### CI
 
 Todo push na `main` roda os testes e, se passarem, publica `softfrost/homepage-rust` no Docker
-Hub. Precisa da variável `DOCKERHUB_USERNAME` e do secret `DOCKERHUB_TOKEN` no repositório.
+Hub. Precisa da variável `DOCKERHUB_USERNAME` e do secret `DOCKERHUB_TOKEN` no repositório. Com
+o secret `DOCKERHUB_README_TOKEN`, também atualiza a página com `docs/DOCKERHUB.md`.
 
 ### Serviços
 

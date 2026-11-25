@@ -8,6 +8,9 @@ argon2 = { version = "0.5", features = ["std"] }
 axum = "0.8"
 chrono = "0.4"
 futures-util = "0.3"
+http-body-util = "0.1"
+hyper = { version = "1", features = ["client", "http1"] }
+hyper-util = { version = "0.1", features = ["tokio"] }
 if-addrs = "0.15"
 image = { version = "0.25", default-features = false, features = ["gif", "jpeg", "png", "webp"] }
 rustix = { version = "1", features = ["fs", "process"] }

@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import Monitor from "./components/Monitor/Monitor";
 import Nav from "./components/Nav/Nav";
 import Network from "./components/Network/Network";
+import Notices from "./components/Notices/Notices";
 import Services from "./components/Services/Services";
 import { useServices } from "./components/Services/useServices";
 import Settings from "./components/Settings/Settings";
@@ -76,6 +77,7 @@ export default function Home({
           </Suspense>
         )}
       </main>
+      <Notices notices={services.notices} onClose={services.dismiss} />
       {settingsOpen && (
         <Settings
           settings={settings}

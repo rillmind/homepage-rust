@@ -1,21 +1,47 @@
 import { categoryColor } from "../../lib/categories";
 import { icons } from "../../lib/icons";
 import { serviceUrl } from "../../lib/serviceUrl";
-import type { Service, Status } from "../../lib/types";
+import type { ContainerAction, Service, Status } from "../../lib/types";
 import ServiceIcon from "./ServiceIcon";
 
 type Props = {
   service: Service;
   status?: Status;
+  busy?: ContainerAction;
   onEdit: () => void;
+  onMenu: (x: number, y: number) => void;
 };
 
-export default function ServiceCard({ service, status, onEdit }: Props) {
-  const state = status && (status.online ? "online" : "offline");
-  const label = { online: "Online", offline: "Offline" };
+export default function ServiceCard({
+  service,
+  status,
+  busy,
+  onEdit,
+  onMenu,
+}: Props) {
+  const state = busy
+    ? "busy"
+    : status && (status.online ? "online" : "offline");
+  const label = {
+    online: "Online",
+    offline: "Offline",
+    busy: busy === "start" ? "Iniciando" : "Reiniciando",
+  };
 
   return (
-    <article className="service">
+    <article
+      className="service"
+      onContextMenu={(event) => {
+        event.preventDefault();
+        // Pelo teclado não há posição do mouse: usa a do card.
+        const box = event.currentTarget.getBoundingClientRect();
+        const keyboard = event.clientX === 0 && event.clientY === 0;
+        onMenu(
+          keyboard ? box.left + 24 : event.clientX,
+          keyboard ? box.top + 24 : event.clientY,
+        );
+      }}
+    >
       <div className="serviceTop">
         <ServiceIcon {...service} />
         <span
@@ -40,11 +66,22 @@ export default function ServiceCard({ service, status, onEdit }: Props) {
           </a>
         </h3>
         <button
-          className="iconButton"
+          className="iconButton editButton"
           onClick={onEdit}
           aria-label={`Editar ${service.name}`}
         >
           {icons.edit}
+        </button>
+        <button
+          className="iconButton moreButton"
+          aria-label={`Opções de ${service.name}`}
+          aria-haspopup="menu"
+          onClick={(event) => {
+            const box = event.currentTarget.getBoundingClientRect();
+            onMenu(box.right, box.bottom);
+          }}
+        >
+          {icons.more}
         </button>
       </div>
       <p>{service.description}</p>

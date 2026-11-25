@@ -22,6 +22,7 @@ const EMPTY = {
   protocol: "http" as ServiceInput["protocol"],
   category: CATEGORIES[0],
   description: "",
+  container: "",
 };
 
 export default function ServiceForm({
@@ -58,10 +59,10 @@ export default function ServiceForm({
 
   const submit = (event: SubmitEvent) => {
     event.preventDefault();
-    const { name, icon, protocol, category, description } = form;
+    const { name, icon, protocol, category, description, container } = form;
     run(() =>
       onSave(
-        { name, icon, protocol, port, category, description },
+        { name, icon, protocol, port, category, description, container },
         service?.id,
       ),
     );
@@ -165,6 +166,18 @@ export default function ServiceForm({
             value={form.description}
             onChange={(e) => set({ description: e.target.value })}
             placeholder="Mídia e streaming local"
+          />
+        </label>
+
+        <label className="field">
+          <span>Contêiner (vazio: encontra pela porta)</span>
+          <input
+            maxLength={128}
+            pattern="[A-Za-z0-9_.\-]*"
+            autoCapitalize="none"
+            value={form.container}
+            onChange={(e) => set({ container: e.target.value })}
+            placeholder="jellyfin"
           />
         </label>
 
