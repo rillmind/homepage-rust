@@ -1,0 +1,117 @@
+.nav {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+
+  padding: 0.6rem 1.25rem;
+  border-bottom: 1px solid var(--ctp-surface0);
+
+  background-color: var(--ctp-mantle);
+}
+
+.navBrand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  min-width: 0;
+}
+
+.navBrand h1 {
+  overflow: hidden;
+
+  font-size: 1.1rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navLogo {
+  display: grid;
+  flex: none;
+  place-items: center;
+
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 1px solid var(--ctp-mauve);
+  border-radius: 6px;
+
+  font-size: 1.1rem;
+  color: var(--ctp-mauve);
+  background-color: var(--ctp-surface0);
+}
+
+.navStatus,
+.navClock {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+
+  padding: 0.3rem 0.8rem;
+  border-radius: 8px;
+
+  font-size: 0.8rem;
+  background-color: var(--ctp-surface0);
+}
+
+.navStatus {
+  margin-right: auto;
+  border-radius: 999px;
+}
+
+.navClock > span {
+  color: var(--ctp-blue);
+}
+
+.dot {
+  flex: none;
+
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+
+  background-color: var(--ctp-overlay0);
+}
+
+.dot.online {
+  background-color: var(--ctp-green);
+}
+
+.dot.offline {
+  background-color: var(--ctp-red);
+}
+
+.navSearch {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--ctp-surface1);
+  border-radius: 8px;
+
+  color: var(--ctp-subtext0);
+  background-color: var(--ctp-surface0);
+}
+
+.navSearch:hover {
+  color: var(--ctp-text);
+}
+
+kbd {
+  padding: 0 0.4rem;
+  border-radius: 4px;
+
+  font: inherit;
+  font-size: 0.7rem;
+  color: var(--ctp-subtext0);
+  background-color: var(--ctp-surface1);
+}
+
+@media (max-width: 1100px) {
+  .navSearch :is(span, kbd),
+  .navSettings span {
+    display: none;
+  }
+}

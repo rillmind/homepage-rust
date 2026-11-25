@@ -1,0 +1,57 @@
+.settings {
+  display: grid;
+  grid-template-columns: 12rem minmax(0, 1fr);
+
+  min-height: 20rem;
+}
+
+.settingsTabs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  padding: 1rem 0.75rem;
+  border-right: 1px solid var(--ctp-surface0);
+}
+
+.settingsBody {
+  padding: 1.25rem;
+}
+
+.settingsForm {
+  display: grid;
+  gap: 1rem;
+}
+
+.settingsApps {
+  display: grid;
+  gap: 0.5rem;
+
+  list-style: none;
+}
+
+.settingsApps li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.settingsApps li > span:nth-child(2) {
+  overflow: hidden;
+  flex: 1;
+
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 600px) {
+  .settings {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .settingsTabs {
+    flex-flow: row wrap;
+
+    border-right: none;
+    border-bottom: 1px solid var(--ctp-surface0);
+  }
+}

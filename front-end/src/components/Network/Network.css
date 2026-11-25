@@ -1,0 +1,46 @@
+.network {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(20rem, 100%), 1fr));
+  gap: 0.9rem;
+}
+
+.interface {
+  padding: 1.25rem;
+  border: 1px solid var(--ctp-surface0);
+  border-radius: 10px;
+
+  background-color: var(--ctp-mantle);
+}
+
+.interface h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+
+  margin-bottom: 0.9rem;
+
+  font-size: 1rem;
+}
+
+.interface small {
+  font-weight: normal;
+  color: var(--ctp-mauve);
+}
+
+dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.4rem 1rem;
+
+  font-size: 0.8rem;
+}
+
+dt {
+  color: var(--ctp-subtext0);
+}
+
+dd {
+  text-align: right;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}

@@ -1,0 +1,139 @@
+@import url("./Catppuccin.css");
+
+@font-face {
+  font-family: "JetBrainsMono Nerd Font";
+  src: url("../assets/fonts/JetBrainsMonoNerdFont-Medium.ttf")
+    format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrainsMono Nerd Font";
+  src: url("../assets/fonts/JetBrainsMonoNerdFont-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-display: swap;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+:root.latte {
+  color-scheme: light;
+}
+
+body {
+  min-height: 100vh;
+
+  font:
+    14px/1.5 "JetBrainsMono Nerd Font",
+    monospace;
+  color: var(--ctp-text);
+  background-color: var(--ctp-base);
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ctp-mauve);
+  outline-offset: 2px;
+}
+
+.button {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--ctp-surface1);
+  border-radius: 8px;
+
+  background-color: var(--ctp-surface0);
+}
+
+.button:hover:not(:disabled) {
+  background-color: var(--ctp-surface1);
+}
+
+.button.primary {
+  border-color: var(--ctp-mauve);
+
+  font-weight: bold;
+  color: var(--ctp-base);
+  background-color: var(--ctp-mauve);
+}
+
+.button.primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.button.danger {
+  color: var(--ctp-red);
+}
+
+.iconButton {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+
+  color: var(--ctp-subtext0);
+}
+
+.iconButton:hover {
+  color: var(--ctp-text);
+  background-color: var(--ctp-surface0);
+}
+
+.field {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  min-width: 0;
+
+  font-size: 0.8rem;
+}
+
+.field > span {
+  color: var(--ctp-subtext0);
+}
+
+.field input,
+.field select {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--ctp-surface0);
+  border-radius: 8px;
+
+  background-color: var(--ctp-crust);
+}
+
+.message {
+  padding: 1rem;
+
+  color: var(--ctp-subtext0);
+}
+
+.error {
+  color: var(--ctp-red);
+}

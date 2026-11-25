@@ -1,0 +1,23 @@
+/** Glifos da Nerd Font. */
+export const icons = {
+  server: "",
+  overview: "",
+  network: "",
+  clock: "",
+  search: "",
+  settings: "",
+  cpu: "",
+  memory: "",
+  disk: "",
+  temp: "",
+  traffic: "",
+  up: "",
+  down: "",
+  add: "",
+  close: "",
+  edit: "",
+  remove: "",
+  open: "",
+  apps: "",
+  info: "",
+};
