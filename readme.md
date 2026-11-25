@@ -31,10 +31,13 @@ pessoal, feito do jeito que eu quero usar e também para estudar Rust e React. �
 
 ## O que já funciona
 
+- Login com usuário único, criado no primeiro acesso
 - CPU, memória, disco, temperatura, fan e rede em tempo real
-- Serviços cadastrados à mão: busca (Ctrl K), filtro por categoria, link e status da porta
+- Serviços cadastrados à mão ou importados do CasaOS, com busca, filtros e status da porta
+- Gerenciador de arquivos: enviar, baixar, copiar, mover, renomear, lixeira, busca,
+  miniaturas, visualização e edição de texto
 - Página Network com todas as interfaces
-- Configurações por navegador: título, tema Catppuccin e intervalo de atualização
+- Configurações: título, tema Catppuccin, intervalo de atualização e senha
 
 ## Como funciona
 
@@ -45,20 +48,33 @@ pessoal, feito do jeito que eu quero usar e também para estudar Rust e React. �
 └──────────────┘        JSON         └───────────────────┘
 ```
 
-O front chama `/api` na própria origem, repassado ao back pelo nginx (ou pelo Vite em
-desenvolvimento). O back só escuta em `127.0.0.1` e não libera CORS.
+O front chama `/homepage-api` na própria origem, repassado ao back pelo nginx (ou pelo Vite
+em desenvolvimento). O back só escuta em `127.0.0.1` e não libera CORS.
 
-**Não há login:** quem abre a página pode editar os serviços. Use só em rede confiável.
+### Segurança
+
+Quem entra tem acesso aos arquivos da máquina inteira, com as permissões do usuário do
+container. **No docker, o padrão é root.**
+
+- Crie a conta logo depois de subir: até lá, quem abrir a página primeiro pode criá-la.
+- Não há HTTPS. Use pelo Tailscale e, de preferência, só nele: `LISTEN=<ip do tailscale>:5173`.
+- Esqueceu a senha? Apague `data/auth.json` e reinicie o back para cadastrar de novo.
+- São somente leitura: `/proc`, `/sys`, `/dev`, `/run` e `/DATA/AppData`. As pastas da raiz,
+  como `/etc`, não podem ser movidas nem excluídas, mas o que está dentro delas pode.
+- A lixeira é a pasta `.homepage-trash` de cada disco e não se esvazia sozinha.
 
 ### Endpoints
 
 | Método     | Rota               | Para quê                                          |
 | ---------- | ------------------ | ------------------------------------------------- |
+| GET, POST  | `/auth/*`          | cadastro, login, saída e senha                    |
 | GET        | `/stats`           | todos os dados da máquina; `null` é dado ausente  |
 | GET, POST  | `/services`        | lista e cria serviços                             |
 | PUT, DELETE| `/services/{id}`   | edita e exclui                                    |
 | GET        | `/services/status` | status das portas dos serviços, por id            |
 | GET        | `/probe/{porta}`   | testa uma porta da máquina                        |
+| GET        | `/casaos/apps`     | apps instalados pelo CasaOS                       |
+| várias     | `/files/*`         | gerenciador de arquivos                           |
 
 ### Configuração
 
@@ -66,7 +82,11 @@ desenvolvimento). O back só escuta em `127.0.0.1` e não libera CORS.
 | -------------- | ----- | -------------------------------------------------------------------- |
 | `CPU_FAN_PATH` | back  | arquivo `fanN_input` da CPU, se as fans da placa não tiverem label   |
 | `DISK_PATH`    | back  | caminho no disco a medir; por padrão, `/`                            |
-| `DATA_PATH`    | back  | arquivo dos serviços; por padrão, `data/services.json`               |
+| `DATA_DIR`     | back  | pasta dos dados; por padrão, `data`                                  |
+| `FILES_ROOT`   | back  | onde a máquina está montada; por padrão, `/`                         |
+| `READ_ONLY_PATHS` | back | pastas protegidas, separadas por `:`; por padrão, `/DATA/AppData` |
+| `LISTEN`       | front | porta ou `ip:porta` do nginx; por padrão, `5173`                     |
+| `APP_UID`      | compose | usuário do back; por padrão, `0`                                   |
 | `BIND_ADDR`    | back  | endereço do back; por padrão, `127.0.0.1:2306`                       |
 
 ## Rodando
@@ -108,11 +128,13 @@ podman-compose down            # os serviços ficam em data/services.json
 Para atualizar, rode `podman-compose down` antes do `up --build -d`: com o container no ar, o
 `podman-compose` gera a imagem nova, mas continua usando a antiga.
 
-No docker, crie a pasta antes e informe o seu usuário:
+No docker, para acessar todos os arquivos:
 
 ```sh
-mkdir -p data && APP_UID=$(id -u) docker compose up --build -d
+docker compose up --build -d   # ou APP_UID=1000, para só os do seu usuário
 ```
+
+Use um arquivo `.env` para fixar `APP_UID` e `LISTEN`.
 
 ### Serviços
 
@@ -126,7 +148,7 @@ make test   # testes e clippy do back, build e lint do front
 ```
 
 Para conferir o funcionamento, rode `make run`, consulte um endpoint com
-`curl http://localhost:2306/stats` e abra o endereço do Vite.
+`curl http://localhost:2306/auth/status` e abra o endereço do Vite.
 
 ## Estrutura
 
@@ -136,13 +158,16 @@ homepage-rust/
 ├── docker-compose.yaml   sobe tudo com podman
 ├── back-end/src/
 │   ├── main.rs           servidor HTTP e desligamento
+│   ├── auth/             conta, senha e sessões
+│   ├── casaos.rs         leitura dos apps do CasaOS
+│   ├── files/            gerenciador de arquivos
 │   ├── pc_info/          dados da máquina
 │   └── services/         cadastro e status dos serviços
 └── front-end/src/
     ├── lib/              api, polling, formatação e preferências
-    └── components/       Nav, Sidebar, Monitor, Services, Network, Settings
+    └── components/       Auth, Files, Nav, Sidebar, Monitor, Services, Network, Settings
 ```
 
 ## Próximos passos
-- [ ] Login
+- [ ] Baixar e enviar pastas
 - [ ] Página de logs do servidor
