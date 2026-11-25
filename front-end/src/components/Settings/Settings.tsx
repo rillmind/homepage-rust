@@ -27,6 +27,8 @@ const TABS = [
 type Props = {
   settings: Values;
   onSave: (settings: Values) => void;
+  username: string;
+  onLogout: () => void;
   onClose: () => void;
   stats: Stats | null;
   services: ServicesState;
@@ -35,6 +37,8 @@ type Props = {
 export default function Settings({
   settings,
   onSave,
+  username,
+  onLogout,
   onClose,
   stats,
   services,
@@ -71,6 +75,9 @@ export default function Settings({
                 <span>{icon}</span> {label}
               </button>
             ))}
+            <button className="sidebarItem logout" onClick={onLogout}>
+              <span>{icons.logout}</span> Sair ({username})
+            </button>
           </nav>
 
           <div className="settingsBody">
