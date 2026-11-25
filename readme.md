@@ -37,7 +37,9 @@ pessoal, feito do jeito que eu quero usar e também para estudar Rust e React. �
 - Gerenciador de arquivos: enviar, baixar, copiar, mover, renomear, lixeira, busca,
   miniaturas, visualização e edição de texto
 - Página Network com todas as interfaces
-- Configurações: título, tema Catppuccin, intervalo de atualização e senha
+- Temas Catppuccin, Gruvbox e [Vinho](https://github.com/rillmind/obsidian-vinho)
+- Layout para celular, tablet e computador
+- Configurações: título, tema, intervalo de atualização e senha
 
 ## Como funciona
 
