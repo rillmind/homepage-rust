@@ -43,7 +43,7 @@ export default function CasaImport({ services, onSave, onClose }: Props) {
       for (const app of chosen) {
         const icon = /^https?:\/\//.test(app.icon) ? app.icon : "";
         const name = app.name.slice(0, 60);
-        await onSave({ ...app, name, icon, category: CATEGORY });
+        await onSave({ ...app, name, icon, category: CATEGORY, container: "" });
       }
       onClose();
     } catch (err) {

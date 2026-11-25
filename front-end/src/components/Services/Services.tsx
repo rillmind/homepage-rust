@@ -4,6 +4,7 @@ import { icons } from "../../lib/icons";
 import type { Service } from "../../lib/types";
 import CasaImport from "./CasaImport";
 import ServiceCard from "./ServiceCard";
+import ServiceMenu, { type MenuTarget } from "./ServiceMenu";
 import ServiceForm from "./ServiceForm";
 import type { ServicesState } from "./useServices";
 import "./Services.css";
@@ -15,12 +16,15 @@ export default function Services({
   statuses,
   save,
   remove,
+  run,
+  busy,
   searchRequest,
 }: Props) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<string | null>(null);
   const [editing, setEditing] = useState<Service | "new" | null>(null);
   const [importing, setImporting] = useState(false);
+  const [menu, setMenu] = useState<MenuTarget | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -92,7 +96,9 @@ export default function Services({
             key={item.id}
             service={item}
             status={statuses?.[item.id]}
+            busy={busy[item.id]}
             onEdit={() => setEditing(item)}
+            onMenu={(x, y) => setMenu({ service: item, x, y })}
           />
         ))}
         <button
@@ -104,6 +110,17 @@ export default function Services({
           <span>Conectar novo contêiner ou porta</span>
         </button>
       </section>
+
+      {menu && (
+        <ServiceMenu
+          key={menu.service.id}
+          target={menu}
+          busy={menu.service.id in busy}
+          onRun={(action) => run(menu.service, action)}
+          onEdit={() => setEditing(menu.service)}
+          onClose={() => setMenu(null)}
+        />
+      )}
 
       {importing && (
         <CasaImport

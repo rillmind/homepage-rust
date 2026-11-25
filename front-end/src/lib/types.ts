@@ -33,13 +33,20 @@ export type ServiceInput = {
   port: number;
   category: string;
   description: string;
+  container: string;
 };
 
 export type Service = ServiceInput & { id: number };
 
 export type Status = { online: boolean; ms: number | null };
 
-export type CasaApp = Omit<ServiceInput, "category">;
+export type Container = { name: string; running: boolean };
+
+export type ContainerAction = "start" | "restart";
+
+export type Outcome = { message: string; warning: boolean; details: string };
+
+export type CasaApp = Omit<ServiceInput, "category" | "container">;
 
 export type AuthStatus = { username: string | null; authenticated: boolean };
 
