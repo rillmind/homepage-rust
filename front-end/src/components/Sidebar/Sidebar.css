@@ -1,5 +1,6 @@
 .sidebar {
   display: flex;
+  overflow-y: auto;
   flex-direction: column;
   gap: 0.5rem;
 
@@ -40,8 +41,6 @@
 }
 
 .sidebarNode {
-  position: sticky;
-  bottom: 1.25rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;

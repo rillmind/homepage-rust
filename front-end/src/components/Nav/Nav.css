@@ -163,9 +163,6 @@ kbd {
 /* Celular: marca e ações em cima, relógio centralizado embaixo */
 @media (max-width: 700px) {
   .nav {
-    position: sticky;
-    z-index: 2;
-    top: 0;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 0.4rem 0.5rem;
 
@@ -207,11 +204,9 @@ kbd {
   }
 }
 
-/* Celular deitado: pouca altura, então uma linha só */
+/* Celular deitado: pouca altura */
 @media (max-height: 480px) {
   .nav {
-    position: static;
-
     padding-block: 0.25rem;
   }
 }

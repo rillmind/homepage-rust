@@ -1,12 +1,14 @@
 .app {
   display: grid;
-  grid-template: auto 1fr / 14rem minmax(0, 1fr);
+  grid-template: auto minmax(0, 1fr) / 14rem minmax(0, 1fr);
 
-  min-height: 100dvh;
+  height: 100dvh;
 }
 
+/* Só o conteúdo rola: a navbar e a sidebar ficam paradas. */
 main {
   display: grid;
+  overflow-y: auto;
   grid-template-columns: minmax(0, 1fr);
   align-content: start;
   gap: 1.25rem;
@@ -28,7 +30,7 @@ main {
   .app {
     --tabs: 3.75rem;
 
-    grid-template: auto 1fr / minmax(0, 1fr);
+    grid-template: auto minmax(0, 1fr) / minmax(0, 1fr);
   }
 
   main {
