@@ -6,6 +6,7 @@ import CasaImport from "./CasaImport";
 import ServiceCard from "./ServiceCard";
 import ServiceMenu, { type MenuTarget } from "./ServiceMenu";
 import ServiceForm from "./ServiceForm";
+import { loadSort, SORTS, sortServices, storeSort, type Sort } from "./sort";
 import type { ServicesState } from "./useServices";
 import "./Services.css";
 
@@ -16,6 +17,7 @@ export default function Services({
   statuses,
   save,
   remove,
+  reorder,
   run,
   busy,
   searchRequest,
@@ -25,6 +27,9 @@ export default function Services({
   const [editing, setEditing] = useState<Service | "new" | null>(null);
   const [importing, setImporting] = useState(false);
   const [menu, setMenu] = useState<MenuTarget | null>(null);
+  const [sort, setSort] = useState(loadSort);
+  const [dragging, setDragging] = useState<number | null>(null);
+  const [over, setOver] = useState<number | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -41,7 +46,7 @@ export default function Services({
   // A categoria some se o último serviço dela for excluído.
   const active = category && categories.includes(category) ? category : null;
   const words = normalize(query).split(/\s+/);
-  const visible = services.filter((item) => {
+  const visible = sortServices(services, sort, statuses).filter((item) => {
     const text = normalize(
       `${item.name} ${item.description} ${item.category} :${item.port}`,
     );
@@ -50,6 +55,25 @@ export default function Services({
       words.every((word) => text.includes(word))
     );
   });
+
+  /** Põe o serviço no lugar do outro, na lista completa e não só na filtrada. */
+  const move = (id: number, targetId: number) => {
+    const from = services.findIndex((item) => item.id === id);
+    const to = services.findIndex((item) => item.id === targetId);
+    if (from < 0 || to < 0 || from === to) return;
+    const next = services.toSpliced(from, 1);
+    next.splice(to, 0, services[from]);
+    reorder(next);
+  };
+
+  const menuIndex = menu
+    ? visible.findIndex((item) => item.id === menu.service.id)
+    : -1;
+  const neighbor = (step: number) => {
+    const other = menuIndex < 0 ? undefined : visible[menuIndex + step];
+    if (sort !== "custom" || !menu || !other) return undefined;
+    return () => move(menu.service.id, other.id);
+  };
 
   return (
     <>
@@ -78,11 +102,31 @@ export default function Services({
             </button>
           ))}
         </div>
+        <label className="sort">
+          {icons.sort}
+          <select
+            aria-label="Ordenar serviços"
+            value={sort}
+            onChange={(e) => {
+              const next = e.target.value as Sort;
+              setSort(next);
+              storeSort(next);
+            }}
+          >
+            {Object.entries(SORTS).map(([key, label]) => (
+              <option key={key} value={key}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
         <button
           className="button importButton"
+          aria-label="Importar do CasaOS"
+          title="Importar do CasaOS"
           onClick={() => setImporting(true)}
         >
-          {icons.import} Importar do CasaOS
+          {icons.import} Importar
         </button>
       </section>
 
@@ -97,6 +141,23 @@ export default function Services({
             service={item}
             status={statuses?.[item.id]}
             busy={busy[item.id]}
+            drag={
+              sort === "custom"
+                ? {
+                    active: dragging === item.id,
+                    over: over === item.id && dragging !== item.id,
+                    onStart: () => setDragging(item.id),
+                    onOver: () => setOver(item.id),
+                    onDrop: () => {
+                      if (dragging !== null) move(dragging, item.id);
+                    },
+                    onEnd: () => {
+                      setDragging(null);
+                      setOver(null);
+                    },
+                  }
+                : undefined
+            }
             onEdit={() => setEditing(item)}
             onMenu={(x, y) => setMenu({ service: item, x, y })}
           />
@@ -117,6 +178,8 @@ export default function Services({
           target={menu}
           busy={menu.service.id in busy}
           onRun={(action) => run(menu.service, action)}
+          onBefore={neighbor(-1)}
+          onAfter={neighbor(1)}
           onEdit={() => setEditing(menu.service)}
           onClose={() => setMenu(null)}
         />

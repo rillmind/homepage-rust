@@ -4,10 +4,20 @@ import { serviceUrl } from "../../lib/serviceUrl";
 import type { ContainerAction, Service, Status } from "../../lib/types";
 import ServiceIcon from "./ServiceIcon";
 
+type Drag = {
+  active: boolean;
+  over: boolean;
+  onStart: () => void;
+  onOver: () => void;
+  onDrop: () => void;
+  onEnd: () => void;
+};
+
 type Props = {
   service: Service;
   status?: Status;
   busy?: ContainerAction;
+  drag?: Drag;
   onEdit: () => void;
   onMenu: (x: number, y: number) => void;
 };
@@ -16,6 +26,7 @@ export default function ServiceCard({
   service,
   status,
   busy,
+  drag,
   onEdit,
   onMenu,
 }: Props) {
@@ -32,7 +43,24 @@ export default function ServiceCard({
 
   return (
     <article
-      className="service"
+      className={`service ${drag?.active ? "dragging" : ""} ${drag?.over ? "dropTarget" : ""}`}
+      draggable={drag !== undefined}
+      onDragStart={(event) => {
+        event.dataTransfer.effectAllowed = "move";
+        // O Firefox só arrasta se houver algum dado.
+        event.dataTransfer.setData("text/plain", service.name);
+        drag?.onStart();
+      }}
+      onDragOver={(event) => {
+        if (!drag) return;
+        event.preventDefault();
+        if (!drag.over) drag.onOver();
+      }}
+      onDrop={(event) => {
+        event.preventDefault();
+        drag?.onDrop();
+      }}
+      onDragEnd={drag?.onEnd}
       onContextMenu={(event) => {
         event.preventDefault();
         // Pelo teclado não há posição do mouse: usa a do card.
@@ -60,6 +88,8 @@ export default function ServiceCard({
           {/* O link cobre o card inteiro, ver .serviceLink::after */}
           <a
             className="serviceLink"
+            draggable={false}
+            title={service.name}
             href={serviceUrl(service.protocol, service.port)}
             target="_blank"
             rel="noreferrer"
@@ -86,7 +116,7 @@ export default function ServiceCard({
           {icons.more}
         </button>
       </div>
-      <p>{service.description}</p>
+      <p title={service.description}>{service.description}</p>
 
       <div className="serviceFooter">
         <span>

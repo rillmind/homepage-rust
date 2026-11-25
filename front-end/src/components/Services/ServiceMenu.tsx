@@ -16,6 +16,8 @@ type Props = {
   target: MenuTarget;
   busy: boolean;
   onRun: (action: ContainerAction) => void;
+  onBefore?: () => void;
+  onAfter?: () => void;
   onEdit: () => void;
   onClose: () => void;
 };
@@ -27,6 +29,8 @@ export default function ServiceMenu({
   target: { service, x, y },
   busy,
   onRun,
+  onBefore,
+  onAfter,
   onEdit,
   onClose,
 }: Props) {
@@ -148,6 +152,16 @@ export default function ServiceMenu({
       <button role="menuitem" onClick={pick(onEdit)}>
         {icons.edit} Editar
       </button>
+      {onBefore && (
+        <button role="menuitem" onClick={pick(onBefore)}>
+          {icons.before} Mover para trás
+        </button>
+      )}
+      {onAfter && (
+        <button role="menuitem" onClick={pick(onAfter)}>
+          {icons.after} Mover para a frente
+        </button>
+      )}
     </div>
   );
 }
