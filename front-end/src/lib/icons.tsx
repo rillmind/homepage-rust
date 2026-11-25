@@ -4,6 +4,7 @@ import {
   ArrowUp,
   ChevronRight,
   CircleAlert,
+  CircleArrowUp,
   CircleCheck,
   ClipboardPaste,
   Clock,
@@ -108,4 +109,5 @@ export const icons = {
   ok: icon(CircleCheck),
   warning: icon(TriangleAlert),
   failed: icon(CircleAlert),
+  update: icon(CircleArrowUp),
 };

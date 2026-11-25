@@ -40,9 +40,9 @@ export type Service = ServiceInput & { id: number };
 
 export type Status = { online: boolean; ms: number | null };
 
-export type Container = { name: string; running: boolean };
+export type Container = { name: string; running: boolean; compose: boolean };
 
-export type ContainerAction = "start" | "restart";
+export type ContainerAction = "start" | "restart" | "update";
 
 export type Outcome = { message: string; warning: boolean; details: string };
 

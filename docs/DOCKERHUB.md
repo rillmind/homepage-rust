@@ -16,7 +16,7 @@ com o back-end em Rust e o front em React.
 |---|---|
 | **Monitor** | CPU, memória, disco, temperatura, fan e rede em tempo real |
 | **Serviços** | cadastro manual ou importado do CasaOS, com busca, filtros e status |
-| **Contêineres** | inicia e reinicia com o botão direito, mostrando o erro e o log se falhar |
+| **Contêineres** | inicia, reinicia e atualiza com o botão direito, mostrando o erro e o log se falhar |
 | **Arquivos** | enviar, baixar, copiar, mover, lixeira, busca, miniaturas e edição de texto |
 | **App** | instalável em navegadores Chromium, com layout para celular e tablet |
 | **Temas** | Catppuccin, Gruvbox e Vinho, claros e escuros |

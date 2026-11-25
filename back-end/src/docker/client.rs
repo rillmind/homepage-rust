@@ -3,7 +3,7 @@ use axum::{
   body::Bytes,
   http::{Method, Request, StatusCode, header},
 };
-use http_body_util::{BodyExt, Empty, Limited};
+use http_body_util::{BodyExt, Full, Limited};
 use hyper::client::conn::http1;
 use hyper_util::rt::TokioIo;
 use serde_json::Value;
@@ -13,6 +13,7 @@ use tokio::{net::UnixStream, time::timeout};
 const MAX_BODY: usize = 8 * 1024 * 1024;
 /// Parar um contêiner pode levar o tempo de tolerância dele.
 const TIMEOUT: Duration = Duration::from_secs(120);
+const PULL_TIMEOUT: Duration = Duration::from_secs(600);
 
 fn fail(message: impl Into<String>) -> AppError {
   AppError::Docker(message.into(), String::new())
@@ -25,7 +26,12 @@ pub struct Client {
 }
 
 impl Client {
-  async fn send(&self, method: Method, path: &str) -> Result<(StatusCode, Bytes), AppError> {
+  async fn send(
+    &self,
+    method: Method,
+    path: &str,
+    body: Option<&Value>,
+  ) -> Result<(StatusCode, Bytes), AppError> {
     let stream = UnixStream::connect(&self.socket)
       .await
       .map_err(|err| match err.kind() {
@@ -46,7 +52,10 @@ impl Client {
       .method(method)
       .uri(path)
       .header(header::HOST, "docker")
-      .body(Empty::<Bytes>::new())
+      .header(header::CONTENT_TYPE, "application/json")
+      .body(Full::new(Bytes::from(
+        body.map(Value::to_string).unwrap_or_default(),
+      )))
       .map_err(|err| fail(format!("Pedido inválido ao Docker: {err}")))?;
     let response = sender.send_request(request).await.map_err(broken)?;
     let status = response.status();
@@ -67,25 +76,74 @@ impl Client {
     Ok((status, body))
   }
 
-  async fn request(&self, method: Method, path: &str) -> Result<(StatusCode, Bytes), AppError> {
-    timeout(TIMEOUT, self.send(method, path))
+  async fn request(
+    &self,
+    method: Method,
+    path: &str,
+    body: Option<&Value>,
+    limit: Duration,
+  ) -> Result<(StatusCode, Bytes), AppError> {
+    timeout(limit, self.send(method, path, body))
       .await
-      .unwrap_or_else(|_| Err(fail("O Docker não respondeu em 2 minutos")))
+      .unwrap_or_else(|_| Err(fail("O Docker demorou demais para responder")))
   }
 
   pub async fn get(&self, path: &str) -> Result<Value, AppError> {
-    let (_, body) = self.request(Method::GET, path).await?;
+    let (_, body) = self.request(Method::GET, path, None, TIMEOUT).await?;
     serde_json::from_slice(&body).map_err(|_| fail("Resposta inesperada do Docker"))
   }
 
   pub async fn post(&self, path: &str) -> Result<(), AppError> {
-    self.request(Method::POST, path).await.map(|_| ())
+    self
+      .request(Method::POST, path, None, TIMEOUT)
+      .await
+      .map(|_| ())
+  }
+
+  /// Cria um contêiner e devolve o id.
+  pub async fn create(&self, config: &Value) -> Result<String, AppError> {
+    let (_, body) = self
+      .request(Method::POST, "/containers/create", Some(config), TIMEOUT)
+      .await?;
+    serde_json::from_slice::<Value>(&body)
+      .ok()
+      .and_then(|json| Some(json["Id"].as_str()?.to_string()))
+      .ok_or_else(|| fail("Resposta inesperada do Docker"))
+  }
+
+  pub async fn remove(&self, id: &str) {
+    let path = format!("/containers/{id}?force=1");
+    let _ = self.request(Method::DELETE, &path, None, TIMEOUT).await;
+  }
+
+  /// Baixa a imagem se ela ainda não existir.
+  pub async fn ensure_image(&self, image: &str, tag: &str) -> Result<(), AppError> {
+    if self
+      .get(&format!("/images/{image}:{tag}/json"))
+      .await
+      .is_ok()
+    {
+      return Ok(());
+    }
+    let path = format!("/images/create?fromImage={image}&tag={tag}");
+    let (_, body) = self
+      .request(Method::POST, &path, None, PULL_TIMEOUT)
+      .await?;
+    // A resposta já começou como 200 quando o download falha: o erro vem no meio dela.
+    let error = String::from_utf8_lossy(&body)
+      .lines()
+      .filter_map(|line| serde_json::from_str::<Value>(line).ok())
+      .find_map(|json| Some(json["error"].as_str()?.to_string()));
+    match error {
+      Some(error) => Err(fail(format!("Falha ao baixar {image}:{tag}: {error}"))),
+      None => Ok(()),
+    }
   }
 
   /// Últimas linhas do log. Sem log disponível, devolve vazio.
   pub async fn logs(&self, id: &str, since: i64) -> String {
-    let path = format!("/containers/{id}/logs?stdout=1&stderr=1&tail=30&since={since}");
-    match self.request(Method::GET, &path).await {
+    let path = format!("/containers/{id}/logs?stdout=1&stderr=1&tail=40&since={since}");
+    match self.request(Method::GET, &path, None, TIMEOUT).await {
       Ok((_, body)) => clean(&demux(&body)),
       Err(_) => String::new(),
     }

@@ -1,4 +1,4 @@
-use super::client::Client;
+use super::{client::Client, compose::Project};
 use crate::{
   casaos,
   error::{AppError, blocking},
@@ -25,12 +25,15 @@ const PORT_WAIT: Duration = Duration::from_secs(40);
 pub enum Action {
   Start,
   Restart,
+  Update,
 }
 
 #[derive(Serialize)]
 pub struct ContainerView {
   name: String,
   running: bool,
+  /// Criado pelo Docker Compose, então pode ser atualizado.
+  compose: bool,
 }
 
 #[derive(Serialize)]
@@ -61,7 +64,7 @@ fn text<'a>(value: &'a Value, pointer: &str) -> &'a str {
   value.pointer(pointer).and_then(Value::as_str).unwrap_or("")
 }
 
-fn label<'a>(container: &'a Value, name: &str) -> &'a str {
+pub fn label<'a>(container: &'a Value, name: &str) -> &'a str {
   let key = format!("com.docker.compose.{name}");
   container["Labels"][key].as_str().unwrap_or("")
 }
@@ -123,6 +126,12 @@ fn start_order(all: &[Value], main: &Value) -> Vec<Value> {
   let mut order = Vec::new();
   visit(all, main, &mut HashSet::new(), &mut order);
   order
+}
+
+fn now() -> i64 {
+  SystemTime::now()
+    .duration_since(UNIX_EPOCH)
+    .map_or(0, |time| time.as_secs() as i64)
 }
 
 /// O próprio contêiner aparece nos caminhos montados pelo Docker dentro dele.
@@ -192,6 +201,7 @@ impl Docker {
     Ok(ContainerView {
       name: name(&container),
       running: is_running(&container),
+      compose: Project::of(&container).is_some(),
     })
   }
 
@@ -207,20 +217,16 @@ impl Docker {
   async fn execute(&self, service: ServiceInput, action: Action) -> Result<Outcome, AppError> {
     let (all, main) = self.find(&service).await?;
     let id = text(&main, "/Id").to_string();
+    if action == Action::Update {
+      return self.update(&main, service.port).await;
+    }
     if is_self(&id) {
       return Err(AppError::Conflict(
         "Este é o contêiner da própria homepage, reinicie pelo CasaOS ou pelo terminal",
       ));
     }
-    if !self.busy.lock().unwrap().insert(id.clone()) {
-      return Err(AppError::Conflict(
-        "Já há uma ação em andamento neste serviço",
-      ));
-    }
-    let _busy = Busy(self.busy.clone(), id.clone());
-    let since = SystemTime::now()
-      .duration_since(UNIX_EPOCH)
-      .map_or(0, |time| time.as_secs() as i64);
+    let _busy = self.reserve(&main)?;
+    let since = now();
 
     if action == Action::Restart {
       let result = self.client.post(&format!("/containers/{id}/restart")).await;
@@ -241,6 +247,67 @@ impl Docker {
     self
       .verify(&id, &name(&main), service.port, since, action)
       .await
+  }
+
+  /// Uma ação por vez em cada projeto do compose (ou contêiner avulso).
+  fn reserve(&self, container: &Value) -> Result<Busy, AppError> {
+    let key = match label(container, "project") {
+      "" => text(container, "/Id").to_string(),
+      project => project.to_string(),
+    };
+    if !self.busy.lock().unwrap().insert(key.clone()) {
+      return Err(AppError::Conflict(
+        "Já há uma ação em andamento neste serviço",
+      ));
+    }
+    Ok(Busy(self.busy.clone(), key))
+  }
+
+  /// docker compose pull e up -d no projeto do serviço.
+  async fn update(&self, main: &Value, port: u16) -> Result<Outcome, AppError> {
+    let fail = |message: &str| AppError::Docker(message.into(), String::new());
+    let project =
+      Project::of(main).ok_or_else(|| fail("Este contêiner não foi criado pelo Docker Compose"))?;
+    project.check()?;
+    let _busy = self.reserve(main)?;
+    let since = now();
+
+    project.pull(&self.client).await?;
+    if is_self(text(main, "/Id")) {
+      // Este processo vai ser trocado: deixa o up rodando sozinho e responde antes.
+      project.up_later(&self.client).await?;
+      return Ok(Outcome {
+        message: "Imagem baixada. A homepage reinicia em instantes, se houver versão nova".into(),
+        warning: false,
+        details: String::new(),
+      });
+    }
+    project.up(&self.client).await?;
+
+    // O contêiner pode ter sido recriado, com outro id.
+    let all = self.client.get("/containers/json?all=1").await?;
+    let updated = all
+      .as_array()
+      .into_iter()
+      .flatten()
+      .find(|item| {
+        label(item, "project") == label(main, "project")
+          && label(item, "service") == label(main, "service")
+      })
+      .ok_or_else(|| fail("O contêiner sumiu depois da atualização"))?;
+    let mut outcome = self
+      .verify(
+        text(updated, "/Id"),
+        &name(updated),
+        port,
+        since,
+        Action::Update,
+      )
+      .await?;
+    if text(updated, "/ImageID") == text(main, "/ImageID") && !outcome.warning {
+      outcome.message = format!("{} já estava na versão mais recente", name(updated));
+    }
+    Ok(outcome)
   }
 
   /// Completa o erro com o nome do contêiner e o log dele.
@@ -297,6 +364,7 @@ impl Docker {
         let verb = match action {
           Action::Start => "iniciado",
           Action::Restart => "reiniciado",
+          Action::Update => "atualizado",
         };
         return Ok(Outcome {
           message: format!("{name} {verb}"),
