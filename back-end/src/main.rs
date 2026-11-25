@@ -1,5 +1,7 @@
 mod auth;
+mod casaos;
 mod error;
+mod files;
 mod pc_info;
 mod services;
 mod storage;
@@ -16,7 +18,10 @@ async fn main() -> io::Result<()> {
   // Só local por padrão: o acesso de fora passa pelo nginx do front.
   let addr = env::var("BIND_ADDR").unwrap_or_else(|_| "127.0.0.1:2306".into());
   let data = PathBuf::from(env::var("DATA_DIR").unwrap_or_else(|_| "data".into()));
+  let files_root = env::var("FILES_ROOT").unwrap_or_else(|_| "/".into());
+  let read_only = env::var("READ_ONLY_PATHS").unwrap_or_else(|_| "/DATA/AppData".into());
 
+  let root = files::Root::new(files_root.into(), &read_only);
   let auth = auth::Auth::open(data.join("auth.json"))?;
 
   let app = Router::new()
@@ -24,6 +29,8 @@ async fn main() -> io::Result<()> {
     .merge(services::routes(services::Store::open(
       data.join("services.json"),
     )?))
+    .merge(casaos::routes(root.clone()))
+    .merge(files::routes(root, &data)?)
     .layer(middleware::from_fn_with_state(auth.clone(), auth::require))
     .merge(auth::routes(auth))
     .layer(middleware::from_fn(auth::same_origin));
