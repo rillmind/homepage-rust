@@ -5,6 +5,7 @@ import {
   errorText,
   getServices,
   getStatuses,
+  orderServices,
   runContainer,
   saveService,
 } from "../../lib/api";
@@ -105,7 +106,33 @@ export function useServices() {
     setFinished((n) => n + 1);
   };
 
-  return { services, statuses, save, remove, run, busy, notices, dismiss };
+  /** Muda na hora e volta atrás se o servidor recusar. */
+  const reorder = async (list: Service[]) => {
+    const previous = services;
+    setServices(list);
+    try {
+      await orderServices(list.map((item) => item.id));
+    } catch (error) {
+      setServices(previous);
+      notify({
+        kind: "failed",
+        message: `Não foi possível salvar a ordem: ${errorText(error)}`,
+        details: "",
+      });
+    }
+  };
+
+  return {
+    services,
+    statuses,
+    save,
+    remove,
+    reorder,
+    run,
+    busy,
+    notices,
+    dismiss,
+  };
 }
 
 export type ServicesState = ReturnType<typeof useServices>;

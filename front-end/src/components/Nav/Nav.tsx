@@ -6,20 +6,10 @@ import "./Nav.css";
 type Props = {
   title: string;
   stats: Stats | null;
-  onSearch: () => void;
   onSettings: () => void;
-  onLogout: () => void;
-  username: string;
 };
 
-export default function Nav({
-  title,
-  stats,
-  onSearch,
-  onSettings,
-  onLogout,
-  username,
-}: Props) {
+export default function Nav({ title, stats, onSettings }: Props) {
   const uptime = stats?.uptime;
 
   return (
@@ -45,24 +35,12 @@ export default function Nav({
       </div>
 
       <div className="navSide navActions">
-        <button className="navSearch" onClick={onSearch} aria-label="Pesquisar">
-          {icons.search} <span>Quick search</span> <kbd>Ctrl K</kbd>
-        </button>
-
         <button
           className="button navSettings"
           onClick={onSettings}
           aria-label="Configurações"
         >
           {icons.settings} <span>Configurações</span>
-        </button>
-        <button
-          className="iconButton"
-          onClick={onLogout}
-          title={`Sair (${username})`}
-          aria-label="Sair"
-        >
-          {icons.logout}
         </button>
       </div>
     </header>

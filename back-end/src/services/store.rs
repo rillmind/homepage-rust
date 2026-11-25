@@ -1,6 +1,7 @@
 use super::models::{Service, ServiceInput};
 use crate::{error::AppError, storage};
 use std::{
+  collections::HashSet,
   io,
   path::PathBuf,
   sync::{Arc, Mutex, MutexGuard},
@@ -57,6 +58,23 @@ impl Store {
     let service = service.clone();
     self.commit(&mut services, next)?;
     Ok(service)
+  }
+
+  /// Recebe todos os ids na nova ordem. Se a lista mudou por outra aba, recusa.
+  pub fn reorder(&self, ids: &[u64]) -> Result<(), AppError> {
+    let mut services = self.lock();
+    let next: Vec<Service> = ids
+      .iter()
+      .filter_map(|id| services.iter().find(|s| s.id == *id).cloned())
+      .collect();
+    let unique: HashSet<&u64> = ids.iter().collect();
+    if next.len() != services.len() || unique.len() != ids.len() || ids.len() != next.len() {
+      return Err(AppError::Conflict(
+        "A lista de serviços mudou, recarregue a página",
+      ));
+    }
+    self.commit(&mut services, next)?;
+    Ok(())
   }
 
   pub fn delete(&self, id: u64) -> Result<(), AppError> {

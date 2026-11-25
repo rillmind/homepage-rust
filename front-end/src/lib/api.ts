@@ -84,6 +84,8 @@ export const saveService = (input: ServiceInput, id?: number) =>
   id === undefined
     ? post<Service>("/services", input)
     : request<Service>(`/services/${id}`, { method: "PUT", body: input });
+export const orderServices = (ids: number[]) =>
+  request<void>("/services/order", { method: "PUT", body: ids });
 export const deleteService = (id: number) =>
   request<void>(`/services/${id}`, { method: "DELETE" });
 export const getContainer = (id: number, signal: AbortSignal) =>

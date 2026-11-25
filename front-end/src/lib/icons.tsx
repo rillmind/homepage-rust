@@ -1,7 +1,10 @@
 import {
   ArrowDown,
   ArrowDownUp,
+  ArrowLeft,
+  ArrowRight,
   ArrowUp,
+  ArrowUpDown,
   ChevronRight,
   CircleAlert,
   CircleArrowUp,
@@ -110,4 +113,7 @@ export const icons = {
   warning: icon(TriangleAlert),
   failed: icon(CircleAlert),
   update: icon(CircleArrowUp),
+  sort: icon(ArrowUpDown),
+  before: icon(ArrowLeft),
+  after: icon(ArrowRight),
 };

@@ -35,11 +35,6 @@ export default function Home({
   const stats = usePolling(getStats, settings.interval * 1000);
   const services = useServices();
 
-  const openSearch = () => {
-    goTo("overview");
-    setSearchRequest((n) => n + 1);
-  };
-
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const combo = (event.ctrlKey || event.metaKey) && event.key === "k";
@@ -57,10 +52,7 @@ export default function Home({
       <Nav
         title={settings.title}
         stats={stats}
-        onSearch={openSearch}
         onSettings={() => setSettingsOpen(true)}
-        onLogout={onLogout}
-        username={username}
       />
       <Sidebar selected={view} stats={stats} />
       {/* A key volta ao topo ao trocar de tela. */}
@@ -83,6 +75,8 @@ export default function Home({
         <Settings
           settings={settings}
           onSave={onSettings}
+          username={username}
+          onLogout={onLogout}
           onClose={() => setSettingsOpen(false)}
           stats={stats}
           services={services}
