@@ -15,6 +15,15 @@ export default function App() {
   useEffect(() => {
     document.documentElement.className = settings.theme;
     document.title = settings.title;
+    // Pinta a barra do app instalado e do navegador com a cor do tema.
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute(
+        "content",
+        getComputedStyle(document.documentElement)
+          .getPropertyValue("--ctp-mantle")
+          .trim(),
+      );
     storeSettings(settings);
   }, [settings]);
 
