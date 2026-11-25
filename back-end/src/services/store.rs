@@ -30,6 +30,12 @@ impl Store {
     self.lock().clone()
   }
 
+  pub fn get(&self, id: u64) -> Result<Service, AppError> {
+    let services = self.lock();
+    let service = services.iter().find(|s| s.id == id);
+    service.cloned().ok_or(AppError::NotFound)
+  }
+
   pub fn create(&self, input: ServiceInput) -> Result<Service, AppError> {
     let mut services = self.lock();
     let id = services.iter().map(|s| s.id).max().unwrap_or(0) + 1;

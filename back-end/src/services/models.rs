@@ -19,6 +19,9 @@ pub struct ServiceInput {
   pub category: String,
   #[serde(default)]
   pub description: String,
+  /// Nome do contêiner. Vazio, é procurado pela porta.
+  #[serde(default)]
+  pub container: String,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
@@ -35,6 +38,7 @@ impl ServiceInput {
       &mut self.icon,
       &mut self.category,
       &mut self.description,
+      &mut self.container,
     ] {
       *field = field.trim().to_string();
     }
@@ -50,6 +54,10 @@ impl ServiceInput {
     }
     if too_long(&self.description, 120) {
       return Err(AppError::Invalid("A descrição deve ter até 120 caracteres"));
+    }
+    let name = |c: char| c.is_ascii_alphanumeric() || "_.-".contains(c);
+    if too_long(&self.container, 128) || !self.container.chars().all(name) {
+      return Err(AppError::Invalid("Nome de contêiner inválido"));
     }
     if self.port == 0 {
       return Err(AppError::Invalid("A porta deve ser de 1 a 65535"));

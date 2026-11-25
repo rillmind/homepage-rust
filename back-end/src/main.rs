@@ -1,5 +1,6 @@
 mod auth;
 mod casaos;
+mod docker;
 mod error;
 mod files;
 mod front;
@@ -35,9 +36,10 @@ async fn main() -> io::Result<()> {
 
   let api = Router::new()
     .merge(pc_info::routes())
-    .merge(services::routes(services::Store::open(
-      data.join("services.json"),
-    )?))
+    .merge(services::routes(
+      services::Store::open(data.join("services.json"))?,
+      docker::Docker::new(root.clone()),
+    ))
     .merge(casaos::routes(root.clone()))
     .merge(files::routes(root, &data)?)
     .layer(middleware::from_fn_with_state(auth.clone(), auth::require))
