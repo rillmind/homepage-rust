@@ -66,11 +66,12 @@ export default function ServiceMenu({
       if (!menu?.contains(event.target as Node)) onClose();
     };
     document.addEventListener("pointerdown", outside);
-    window.addEventListener("scroll", onClose, { passive: true });
+    // Quem rola é o main, e o scroll dele não chega à janela sem o capture.
+    document.addEventListener("scroll", onClose, true);
     window.addEventListener("resize", onClose);
     return () => {
       document.removeEventListener("pointerdown", outside);
-      window.removeEventListener("scroll", onClose);
+      document.removeEventListener("scroll", onClose, true);
       window.removeEventListener("resize", onClose);
       if (previous instanceof HTMLElement) previous.focus();
     };
@@ -125,7 +126,7 @@ export default function ServiceMenu({
       </a>
       {!container && !error && <p>Verificando o contêiner...</p>}
       {error && <p className="error">{error}</p>}
-      {container && (
+      {container && !container.own && (
         <button
           role="menuitem"
           disabled={busy}

@@ -63,7 +63,8 @@ export default function Home({
         username={username}
       />
       <Sidebar selected={view} stats={stats} />
-      <main>
+      {/* A key volta ao topo ao trocar de tela. */}
+      <main key={view}>
         {view === "overview" && (
           <>
             <Monitor stats={stats} />
