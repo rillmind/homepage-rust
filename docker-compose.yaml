@@ -1,0 +1,25 @@
+services:
+  back-end:
+    build: ./back-end
+    # Rede do host: é dela que vêm o IP, o tráfego e as portas dos serviços.
+    network_mode: host
+    # Dono do ./data. No podman rootless, 0 é o seu usuário; no docker, use APP_UID=1000.
+    user: "${APP_UID:-0}"
+    environment:
+      DISK_PATH: /host-root
+      CPU_FAN_PATH: ${CPU_FAN_PATH:-}
+    volumes:
+      # Um arquivo da raiz do host basta para medir o disco, sem expor o resto.
+      - /etc/hostname:/host-root:ro
+      # Data e hora no fuso do host.
+      - /etc/localtime:/etc/localtime:ro
+      - ./data:/data:Z
+    restart: unless-stopped
+
+  front-end:
+    build: ./front-end
+    # Publica a porta 5173 e repassa /api para o back em 127.0.0.1:2306.
+    network_mode: host
+    depends_on:
+      - back-end
+    restart: unless-stopped
