@@ -105,6 +105,9 @@ podman-compose logs -f
 podman-compose down            # os serviços ficam em data/services.json
 ```
 
+Para atualizar, rode `podman-compose down` antes do `up --build -d`: com o container no ar, o
+`podman-compose` gera a imagem nova, mas continua usando a antiga.
+
 No docker, crie a pasta antes e informe o seu usuário:
 
 ```sh
