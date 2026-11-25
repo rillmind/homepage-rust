@@ -1,6 +1,8 @@
 services:
-  back-end:
-    build: ./back-end
+  homepage:
+    image: docker.io/softfrost/homepage-rust:${TAG:-latest}
+    build: .
+    container_name: homepage
     # Rede do host: é dela que vêm o IP, o tráfego e as portas dos serviços.
     network_mode: host
     # Quem acessa os arquivos. No docker, 0 é o root da máquina, com acesso a tudo, e
@@ -10,6 +12,8 @@ services:
     security_opt:
       - label=disable
     environment:
+      # Porta ou ip:porta. Atrás do "tailscale serve", use 127.0.0.1:5173.
+      LISTEN: ${LISTEN:-5173}
       FILES_ROOT: /host
       DISK_PATH: /host
       READ_ONLY_PATHS: ${READ_ONLY_PATHS-/DATA/AppData}
@@ -20,15 +24,4 @@ services:
       # Data e hora no fuso do host.
       - /etc/localtime:/etc/localtime:ro
       - ./data:/data
-    restart: unless-stopped
-
-  front-end:
-    build: ./front-end
-    # Repassa /homepage-api para o back em 127.0.0.1:2306.
-    network_mode: host
-    environment:
-      # Para aceitar só um IP, como o do Tailscale: LISTEN=100.x.y.z:5173
-      LISTEN: ${LISTEN:-5173}
-    depends_on:
-      - back-end
     restart: unless-stopped

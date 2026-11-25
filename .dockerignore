@@ -1,0 +1,10 @@
+*
+!back-end/Cargo.toml
+!back-end/Cargo.lock
+!back-end/src
+!front-end
+front-end/node_modules
+front-end/dist
+front-end/*.log
+front-end/.dev.pid
+front-end/assets
