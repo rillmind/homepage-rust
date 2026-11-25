@@ -25,7 +25,9 @@ export default function ServiceCard({
   const label = {
     online: "Online",
     offline: "Offline",
-    busy: busy === "start" ? "Iniciando" : "Reiniciando",
+    busy: { start: "Iniciando", restart: "Reiniciando", update: "Atualizando" }[
+      busy ?? "start"
+    ],
   };
 
   return (

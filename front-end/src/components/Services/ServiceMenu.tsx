@@ -135,6 +135,15 @@ export default function ServiceMenu({
           {container.running ? "Reiniciar serviço" : "Iniciar serviço"}
         </button>
       )}
+      {container?.compose && (
+        <button
+          role="menuitem"
+          disabled={busy}
+          onClick={pick(() => onRun("update"))}
+        >
+          {icons.update} Atualizar serviço
+        </button>
+      )}
       <button role="menuitem" onClick={pick(onEdit)}>
         {icons.edit} Editar
       </button>

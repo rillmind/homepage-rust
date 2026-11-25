@@ -86,7 +86,11 @@ export function useServices() {
       );
       notify({ kind: warning ? "warning" : "ok", message, details });
     } catch (error) {
-      const verb = action === "start" ? "iniciar" : "reiniciar";
+      const verb = {
+        start: "iniciar",
+        restart: "reiniciar",
+        update: "atualizar",
+      }[action];
       notify({
         kind: "failed",
         message: `Não foi possível ${verb} ${service.name}: ${errorText(error)}`,
