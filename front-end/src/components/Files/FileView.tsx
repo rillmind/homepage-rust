@@ -5,19 +5,40 @@ import { icons } from "../../lib/icons";
 import type { Found } from "../../lib/types";
 import { hasThumb, iconOf, kindOf, parentOf } from "./fileTypes";
 
-const ROW_HEIGHT = 40;
-const CELL = { width: 136, height: 150 };
+const ROW_HEIGHT = 48;
+const CELL = { width: 148, height: 172 };
 const OVERSCAN = 4;
+
+export type SortKey = "name" | "modified" | "size";
+export type Sort = { key: SortKey; reverse: boolean };
+
+const COLUMNS: { key: SortKey; label: string }[] = [
+  { key: "name", label: "Nome" },
+  { key: "modified", label: "Modificado" },
+  { key: "size", label: "Tamanho" },
+];
 
 type Props = {
   items: Found[];
   grid: boolean;
   selected: Set<string>;
   showParent: boolean;
+  sort: Sort;
+  onSort: (key: SortKey) => void;
   onSelect: (item: Found, event: MouseEvent) => void;
   onToggle: (item: Found) => void;
+  onToggleAll: () => void;
   onOpen: (item: Found) => void;
 };
+
+function formatDate(seconds: number) {
+  const date = new Date(seconds * 1000);
+  const time = date.toLocaleTimeString("pt-BR", { timeStyle: "short" });
+  const today = new Date().toDateString() === date.toDateString();
+  return today
+    ? `Hoje, ${time}`
+    : `${date.toLocaleDateString("pt-BR")} ${time}`;
+}
 
 /** Desenha só o que está visível, para pastas enormes não pesarem. */
 export default function FileView({
@@ -25,8 +46,11 @@ export default function FileView({
   grid,
   selected,
   showParent,
+  sort,
+  onSort,
   onSelect,
   onToggle,
+  onToggleAll,
   onOpen,
 }: Props) {
   const ref = useRef<HTMLDivElement>(null);
@@ -59,6 +83,23 @@ export default function FileView({
 
   return (
     <div className="fileView" ref={ref}>
+      {!grid && items.length > 0 && (
+        <div className="fileHead">
+          <input
+            type="checkbox"
+            aria-label="Selecionar tudo"
+            checked={items.every((item) => selected.has(item.path))}
+            onChange={onToggleAll}
+          />
+          {COLUMNS.map(({ key, label }) => (
+            <button key={key} className={key} onClick={() => onSort(key)}>
+              {key === "modified" && showParent ? "Pasta" : label}
+              {sort.key === key && (sort.reverse ? icons.down : icons.up)}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div style={{ height: rows * height, position: "relative" }}>
         <div
           className={grid ? "fileGrid" : "fileList"}
@@ -91,38 +132,40 @@ export default function FileView({
                   iconOf(item)
                 )}
               </span>
-              <button
-                className="fileName"
-                onClick={(event) => {
-                  // Com Ctrl ou Shift o clique seleciona, como no resto da linha.
-                  if (event.ctrlKey || event.metaKey || event.shiftKey) return;
-                  event.stopPropagation();
-                  onOpen(item);
-                }}
-              >
-                {item.name}
-                {item.isLink && <small> {icons.link}</small>}
-              </button>
-              {!grid && (
-                <>
-                  <span className="fileMeta">
-                    {showParent
-                      ? parentOf(item.path)
-                      : new Date(item.modified * 1000).toLocaleString("pt-BR", {
-                          dateStyle: "short",
-                          timeStyle: "short",
-                        })}
-                  </span>
-                  <span className="fileSize">
-                    {item.isDir ? "" : formatBytes(item.size)}
-                  </span>
-                </>
-              )}
+              <span className="fileLabel">
+                <button
+                  className="fileName"
+                  onClick={(event) => {
+                    // Com Ctrl ou Shift o clique seleciona, como no resto da linha.
+                    if (event.ctrlKey || event.metaKey || event.shiftKey) {
+                      return;
+                    }
+                    event.stopPropagation();
+                    onOpen(item);
+                  }}
+                >
+                  {item.name}
+                </button>
+                {item.isLink && icons.link}
+              </span>
+              <span className="fileMeta">
+                {showParent ? parentOf(item.path) : formatDate(item.modified)}
+              </span>
+              <span className="fileSize">
+                {item.isDir ? "Pasta" : formatBytes(item.size)}
+              </span>
             </div>
           ))}
         </div>
       </div>
-      {items.length === 0 && <p className="message">Nada por aqui.</p>}
+
+      {items.length === 0 && (
+        <div className="fileEmpty">
+          {icons.openFolder}
+          <strong>Nada por aqui</strong>
+          <span>Arraste arquivos para cá ou use o botão Enviar.</span>
+        </div>
+      )}
     </div>
   );
 }

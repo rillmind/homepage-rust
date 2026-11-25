@@ -1,0 +1,122 @@
+/*
+ * Temas além do Catppuccin. Usam os mesmos nomes de variável, então o resto do CSS não
+ * muda: --ctp-mauve é a cor de destaque e mantle/base/surface são os fundos.
+ */
+
+/* Gruvbox: https://github.com/morhetz/gruvbox */
+.gruvbox {
+  --ctp-rosewater: #ebdbb2;
+  --ctp-flamingo: #d3869b;
+  --ctp-pink: #d3869b;
+  --ctp-mauve: #fe8019;
+  --ctp-red: #fb4934;
+  --ctp-maroon: #cc241d;
+  --ctp-peach: #d65d0e;
+  --ctp-yellow: #fabd2f;
+  --ctp-green: #b8bb26;
+  --ctp-teal: #8ec07c;
+  --ctp-sky: #8ec07c;
+  --ctp-sapphire: #83a598;
+  --ctp-blue: #83a598;
+  --ctp-lavender: #d3869b;
+  --ctp-text: #ebdbb2;
+  --ctp-subtext1: #d5c4a1;
+  --ctp-subtext0: #bdae93;
+  --ctp-overlay2: #a89984;
+  --ctp-overlay1: #928374;
+  --ctp-overlay0: #7c6f64;
+  --ctp-surface2: #665c54;
+  --ctp-surface1: #504945;
+  --ctp-surface0: #3c3836;
+  --ctp-base: #282828;
+  --ctp-mantle: #1d2021;
+  --ctp-crust: #141617;
+}
+
+.gruvbox-light {
+  --ctp-rosewater: #3c3836;
+  --ctp-flamingo: #8f3f71;
+  --ctp-pink: #8f3f71;
+  --ctp-mauve: #af3a03;
+  --ctp-red: #9d0006;
+  --ctp-maroon: #cc241d;
+  --ctp-peach: #af3a03;
+  --ctp-yellow: #b57614;
+  --ctp-green: #79740e;
+  --ctp-teal: #427b58;
+  --ctp-sky: #427b58;
+  --ctp-sapphire: #076678;
+  --ctp-blue: #076678;
+  --ctp-lavender: #8f3f71;
+  --ctp-text: #3c3836;
+  --ctp-subtext1: #504945;
+  --ctp-subtext0: #665c54;
+  --ctp-overlay2: #7c6f64;
+  --ctp-overlay1: #928374;
+  --ctp-overlay0: #a89984;
+  --ctp-surface2: #bdae93;
+  --ctp-surface1: #d5c4a1;
+  --ctp-surface0: #ebdbb2;
+  --ctp-base: #fbf1c7;
+  --ctp-mantle: #f2e5bc;
+  --ctp-crust: #f9f5d7;
+}
+
+/* Vinho: https://github.com/rillmind/obsidian-vinho */
+.vinho {
+  --ctp-rosewater: #f6e9e2;
+  --ctp-flamingo: #c99ab8;
+  --ctp-pink: #dc7396;
+  --ctp-mauve: #d0688c;
+  --ctp-red: #e0566f;
+  --ctp-maroon: #8c2f4b;
+  --ctp-peach: #d98968;
+  --ctp-yellow: #d9a862;
+  --ctp-green: #a3ad7a;
+  --ctp-teal: #8fb0a4;
+  --ctp-sky: #8fb0a4;
+  --ctp-sapphire: #93a3c0;
+  --ctp-blue: #93a3c0;
+  --ctp-lavender: #c99ab8;
+  --ctp-text: #e8d5cf;
+  --ctp-subtext1: #c9aaab;
+  --ctp-subtext0: #b08d94;
+  --ctp-overlay2: #b08d94;
+  --ctp-overlay1: #9c777f;
+  --ctp-overlay0: #8a646c;
+  --ctp-surface2: #5f2c3c;
+  --ctp-surface1: #4a1d2c;
+  --ctp-surface0: #35151f;
+  --ctp-base: #1c0b12;
+  --ctp-mantle: #28111a;
+  --ctp-crust: #15070d;
+}
+
+.vinho-light {
+  --ctp-rosewater: #35151f;
+  --ctp-flamingo: #7d436b;
+  --ctp-pink: #a93d60;
+  --ctp-mauve: #8c2f4b;
+  --ctp-red: #b22945;
+  --ctp-maroon: #8c2f4b;
+  --ctp-peach: #9c502c;
+  --ctp-yellow: #855b16;
+  --ctp-green: #58652a;
+  --ctp-teal: #2f6758;
+  --ctp-sky: #2f6758;
+  --ctp-sapphire: #435782;
+  --ctp-blue: #435782;
+  --ctp-lavender: #7d436b;
+  --ctp-text: #35151f;
+  --ctp-subtext1: #5f2c3c;
+  --ctp-subtext0: #75505a;
+  --ctp-overlay2: #75505a;
+  --ctp-overlay1: #805a63;
+  --ctp-overlay0: #8a646c;
+  --ctp-surface2: #c79fa2;
+  --ctp-surface1: #dcc0bc;
+  --ctp-surface0: #ebd7d1;
+  --ctp-base: #fbf3ef;
+  --ctp-mantle: #f3e5e0;
+  --ctp-crust: #f8eeea;
+}

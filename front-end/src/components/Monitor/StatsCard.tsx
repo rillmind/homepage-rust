@@ -1,13 +1,13 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import ProgressBar from "./ProgressBar";
 
 type Props = {
-  icon: string;
+  icon: ReactNode;
   title: string;
   color: string;
   header?: string;
-  value?: string;
-  details?: string;
+  value?: ReactNode;
+  details?: ReactNode;
   percent?: number;
 };
 

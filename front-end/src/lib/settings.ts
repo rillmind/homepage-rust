@@ -1,4 +1,24 @@
-export const THEMES = ["mocha", "macchiato", "frappe", "latte"] as const;
+export const THEMES = [
+  "mocha",
+  "macchiato",
+  "frappe",
+  "latte",
+  "gruvbox",
+  "gruvbox-light",
+  "vinho",
+  "vinho-light",
+] as const;
+
+export const THEME_NAMES: Record<(typeof THEMES)[number], string> = {
+  mocha: "Catppuccin Mocha",
+  macchiato: "Catppuccin Macchiato",
+  frappe: "Catppuccin Frappé",
+  latte: "Catppuccin Latte (claro)",
+  gruvbox: "Gruvbox",
+  "gruvbox-light": "Gruvbox claro",
+  vinho: "Vinho",
+  "vinho-light": "Vinho claro",
+};
 export const INTERVALS = [1, 2, 5, 10] as const;
 
 export type Settings = {

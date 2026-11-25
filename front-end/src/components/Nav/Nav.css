@@ -75,6 +75,8 @@
 }
 
 .navClock > span {
+  display: grid;
+
   color: var(--ctp-blue);
 }
 
@@ -123,33 +125,93 @@ kbd {
   background-color: var(--ctp-surface1);
 }
 
+@media (max-width: 1300px) {
+  .navUptime,
+  .navSearch kbd {
+    display: none;
+  }
+}
+
+/* Tablet */
 @media (max-width: 1100px) {
-  .navSearch :is(span, kbd),
+  .navSearch span,
   .navSettings span {
     display: none;
   }
+
+  .nav,
+  .navSide {
+    gap: 0.75rem;
+  }
+
+  .navSearch,
+  .navSettings {
+    justify-content: center;
+
+    width: 2.75rem;
+    height: 2.75rem;
+    padding: 0;
+  }
 }
 
-@media (max-width: 1200px) {
-  .navUptime {
+@media (max-width: 900px) {
+  .navStatus {
     display: none;
   }
 }
 
-@media (max-width: 1000px) {
+/* Celular: marca e ações em cima, relógio centralizado embaixo */
+@media (max-width: 700px) {
   .nav {
+    position: sticky;
+    z-index: 2;
+    top: 0;
     grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.4rem 0.5rem;
+
+    padding: 0.5rem max(0.75rem, env(safe-area-inset-right)) 0.5rem
+      max(0.75rem, env(safe-area-inset-left));
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+  }
+
+  .navSide {
+    gap: 0.4rem;
+  }
+
+  .navBrand {
+    gap: 0.5rem;
+  }
+
+  .navBrand h1 {
+    font-size: 0.95rem;
   }
 
   .navClock {
     grid-row: 2;
     grid-column: 1 / -1;
     justify-self: center;
+
+    padding: 0.1rem 0.7rem;
+
+    font-size: 0.75rem;
   }
 }
 
-@media (max-width: 600px) {
-  .navStatus {
+@media (max-width: 380px) {
+  .navBrand .navLogo {
     display: none;
+  }
+
+  .navBrand h1 {
+    font-size: 0.85rem;
+  }
+}
+
+/* Celular deitado: pouca altura, então uma linha só */
+@media (max-height: 480px) {
+  .nav {
+    position: static;
+
+    padding-block: 0.25rem;
   }
 }

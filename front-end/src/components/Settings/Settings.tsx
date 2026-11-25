@@ -5,6 +5,7 @@ import { icons } from "../../lib/icons";
 import {
   DEFAULTS,
   INTERVALS,
+  THEME_NAMES,
   THEMES,
   type Settings as Values,
 } from "../../lib/settings";
@@ -86,7 +87,7 @@ export default function Settings({
                   />
                 </label>
                 <label className="field">
-                  <span>Tema Catppuccin</span>
+                  <span>Tema</span>
                   <select
                     value={draft.theme}
                     onChange={(e) =>
@@ -97,7 +98,9 @@ export default function Settings({
                     }
                   >
                     {THEMES.map((theme) => (
-                      <option key={theme}>{theme}</option>
+                      <option key={theme} value={theme}>
+                        {THEME_NAMES[theme]}
+                      </option>
                     ))}
                   </select>
                 </label>
@@ -171,7 +174,7 @@ export default function Settings({
                   {stats?.uptime != null ? formatUptime(stats.uptime) : "--"}
                 </dd>
                 <dt>Feito com</dt>
-                <dd>Rust, axum, React e Catppuccin</dd>
+                <dd>Rust, axum e React</dd>
               </dl>
             )}
           </div>

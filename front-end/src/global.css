@@ -1,4 +1,5 @@
 @import url("./Catppuccin.css");
+@import url("./Themes.css");
 
 @font-face {
   font-family: "JetBrainsMono Nerd Font";
@@ -26,12 +27,12 @@
   color-scheme: dark;
 }
 
-:root.latte {
+:root:is(.latte, .gruvbox-light, .vinho-light) {
   color-scheme: light;
 }
 
 body {
-  min-height: 100vh;
+  min-height: 100dvh;
 
   font:
     14px/1.5 "JetBrainsMono Nerd Font",
@@ -91,7 +92,32 @@ button:disabled {
   color: var(--ctp-red);
 }
 
+.icon {
+  flex: none;
+
+  width: 1.2em;
+  height: 1.2em;
+
+  vertical-align: -0.22em;
+}
+
+.icon.filled {
+  fill: currentcolor;
+}
+
+button.button,
+a.button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .iconButton {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+
   width: 2rem;
   height: 2rem;
   border-radius: 8px;
@@ -135,4 +161,22 @@ button:disabled {
 
 .error {
   color: var(--ctp-red);
+}
+
+/* Toque: alvos maiores, e 16px nos campos para o iOS não dar zoom */
+@media (pointer: coarse), (max-width: 1100px) {
+  .iconButton {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .button {
+    min-height: 2.6rem;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }

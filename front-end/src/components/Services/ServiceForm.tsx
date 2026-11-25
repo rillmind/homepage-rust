@@ -88,7 +88,7 @@ export default function ServiceForm({
         <label className="field">
           <span>Nome do serviço (obrigatório)</span>
           <input
-            autoFocus
+            data-autofocus
             required
             maxLength={60}
             value={form.name}

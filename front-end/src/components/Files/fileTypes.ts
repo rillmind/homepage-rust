@@ -2,7 +2,15 @@ import { icons } from "../../lib/icons";
 import type { Entry } from "../../lib/types";
 
 export type Kind =
-  "folder" | "image" | "video" | "audio" | "pdf" | "archive" | "text" | "file";
+  | "folder"
+  | "image"
+  | "video"
+  | "audio"
+  | "pdf"
+  | "archive"
+  | "text"
+  | "code"
+  | "file";
 
 const EXTENSIONS: Partial<Record<Kind, string>> = {
   image: "png jpg jpeg gif webp avif bmp",
@@ -10,7 +18,8 @@ const EXTENSIONS: Partial<Record<Kind, string>> = {
   audio: "mp3 ogg wav flac m4a opus aac",
   pdf: "pdf",
   archive: "zip tar gz xz zst bz2 7z rar",
-  text: "txt md log json yaml yml toml ini conf cfg env sh bash zsh py js ts tsx jsx css html xml svg csv rs go c h cpp java sql service",
+  text: "txt md log csv ini conf cfg env",
+  code: "json yaml yml toml sh bash zsh py js ts tsx jsx css html xml svg rs go c h cpp java sql service",
 };
 
 const KINDS = new Map(

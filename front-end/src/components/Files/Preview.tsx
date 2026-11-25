@@ -29,7 +29,7 @@ export default function Preview({ item, readOnly, onClose }: Props) {
         {kind === "video" && <video src={url} controls autoPlay />}
         {kind === "audio" && <audio src={url} controls autoPlay />}
         {kind === "pdf" && <iframe src={url} title={item.name} />}
-        {(kind === "text" || kind === "file") && (
+        {["text", "code", "file"].includes(kind) && (
           <TextEditor path={item.path} readOnly={readOnly} onDirty={setDirty} />
         )}
         {kind === "archive" && <p>Este tipo não tem visualização.</p>}

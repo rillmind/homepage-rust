@@ -43,15 +43,41 @@
   text-overflow: ellipsis;
 }
 
-@media (max-width: 600px) {
+.settingsTabs .sidebarItem {
+  flex: none;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.75rem;
+
+  min-height: 2.5rem;
+  padding: 0.5rem 0.9rem;
+
+  font-size: 0.85rem;
+}
+
+.settingsTabs .sidebarItem > span {
+  font-size: 1rem;
+}
+
+@media (max-width: 700px) {
   .settings {
     grid-template-columns: minmax(0, 1fr);
   }
 
   .settingsTabs {
-    flex-flow: row wrap;
+    overflow-x: auto;
+    flex-direction: row;
 
+    padding: 0.6rem;
     border-right: none;
     border-bottom: 1px solid var(--ctp-surface0);
+
+    white-space: nowrap;
+    scrollbar-width: none;
+  }
+
+  .settingsBody {
+    padding: 1rem;
   }
 }

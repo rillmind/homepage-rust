@@ -1,11 +1,12 @@
+import type { ReactNode } from "react";
 import { icons } from "../../lib/icons";
 import type { Stats } from "../../lib/types";
 import { goTo, type View } from "../../lib/useHash";
 import "./Sidebar.css";
 
-const ITEMS: { view: View; label: string; icon: string }[] = [
+const ITEMS: { view: View; label: string; icon: ReactNode }[] = [
   { view: "overview", label: "Overview", icon: icons.overview },
-  { view: "files", label: "Arquivos", icon: icons.folder },
+  { view: "files", label: "Arquivos", icon: icons.folders },
   { view: "network", label: "Network", icon: icons.network },
 ];
 

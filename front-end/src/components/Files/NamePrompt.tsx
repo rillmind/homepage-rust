@@ -35,7 +35,7 @@ export default function NamePrompt({
         <label className="field">
           <span>Nome</span>
           <input
-            autoFocus
+            data-autofocus
             required
             value={name}
             onFocus={(event) => event.target.select()}

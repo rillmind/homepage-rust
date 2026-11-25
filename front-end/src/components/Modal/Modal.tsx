@@ -5,7 +5,7 @@ import "./Modal.css";
 type Props = {
   title: string;
   subtitle: string;
-  icon: string;
+  icon: ReactNode;
   size?: "wide" | "full";
   onClose: () => void;
   children: ReactNode;
@@ -25,6 +25,8 @@ export default function Modal({
   useEffect(() => {
     const dialog = ref.current;
     dialog?.showModal();
+    // O autoFocus do React não serve: roda com o dialog ainda fechado.
+    dialog?.querySelector<HTMLElement>("[data-autofocus]")?.focus();
     return () => dialog?.close();
   }, []);
 

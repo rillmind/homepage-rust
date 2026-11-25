@@ -16,12 +16,12 @@ import {
   transferItems,
   trashItems,
 } from "../../lib/api";
-import { normalize } from "../../lib/format";
+import { formatBytes, normalize } from "../../lib/format";
 import { icons } from "../../lib/icons";
 import type { Found, Job, Listing } from "../../lib/types";
 import { goTo } from "../../lib/useHash";
 import Activity from "./Activity";
-import FileView from "./FileView";
+import FileView, { type Sort, type SortKey } from "./FileView";
 import NamePrompt from "./NamePrompt";
 import Preview from "./Preview";
 import Trash from "./Trash";
@@ -29,13 +29,18 @@ import { baseName, joinPath, parentOf } from "./fileTypes";
 import { useUploads } from "./useUploads";
 import "./Files.css";
 
-type Sort = "name" | "modified" | "size";
 type Clipboard = { mode: "copy" | "move"; items: string[] };
 type Dialog =
   | { type: "folder" | "file" | "trash" }
   | { type: "rename" | "preview"; item: Found };
 
-const SHORTCUTS = ["/", "/home", "/DATA", "/media", "/mnt"];
+const PLACES = [
+  { path: "/", label: "Raiz", icon: icons.disk },
+  { path: "/home", label: "Home", icon: icons.home },
+  { path: "/DATA", label: "DATA", icon: icons.server },
+  { path: "/media", label: "Media", icon: icons.usb },
+  { path: "/mnt", label: "Mnt", icon: icons.folders },
+];
 const COLLATOR = new Intl.Collator("pt-BR", { numeric: true });
 
 function readFlag(key: string) {
@@ -54,12 +59,28 @@ function writeFlag(key: string, value: boolean) {
   }
 }
 
-function sortItems(items: Found[], sort: Sort) {
+function sortItems(items: Found[], { key, reverse }: Sort) {
   return items.toSorted((a, b) => {
     if (a.isDir !== b.isDir) return a.isDir ? -1 : 1;
-    const order = sort === "name" ? 0 : b[sort] - a[sort];
-    return order || COLLATOR.compare(a.name, b.name);
+    const order = key === "name" ? 0 : a[key] - b[key];
+    const result = order || COLLATOR.compare(a.name, b.name);
+    return reverse ? -result : result;
   });
+}
+
+function summary(items: Found[]) {
+  const folders = items.filter((item) => item.isDir).length;
+  const files = items.length - folders;
+  const size = items.reduce((sum, item) => sum + item.size, 0);
+  const count = (n: number, one: string, many: string) =>
+    `${n.toLocaleString("pt-BR")} ${n === 1 ? one : many}`;
+  return [
+    folders > 0 && count(folders, "pasta", "pastas"),
+    files > 0 && count(files, "arquivo", "arquivos"),
+    files > 0 && formatBytes(size),
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 export default function Files({ path }: { path: string }) {
@@ -72,7 +93,7 @@ export default function Files({ path }: { path: string }) {
     found: Found[];
     partial: boolean;
   } | null>(null);
-  const [sort, setSort] = useState<Sort>("name");
+  const [sort, setSort] = useState<Sort>({ key: "name", reverse: false });
   const [grid, setGrid] = useState(() => readFlag("homepage-files-grid"));
   const [hidden, setHidden] = useState(() => readFlag("homepage-files-hidden"));
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -204,6 +225,18 @@ export default function Files({ path }: { path: string }) {
     setAnchor(item.path);
   };
 
+  // Data e tamanho começam do maior, que é o que se costuma procurar.
+  const sortBy = (key: SortKey) =>
+    setSort((old) => ({
+      key,
+      reverse: old.key === key ? !old.reverse : key !== "name",
+    }));
+
+  const toggleAll = () => {
+    const all = items.every((item) => selected.has(item.path));
+    setSelected(new Set(all ? [] : items.map((item) => item.path)));
+  };
+
   const select = (item: Found, event: MouseEvent) => {
     if (event.shiftKey) {
       const from = items.findIndex((other) => other.path === anchor);
@@ -308,7 +341,7 @@ export default function Files({ path }: { path: string }) {
 
   return (
     <section
-      className={dragging ? "files dragging" : "files"}
+      className="files"
       aria-label="Arquivos"
       onDragOver={(event) => {
         event.preventDefault();
@@ -321,196 +354,245 @@ export default function Files({ path }: { path: string }) {
       }}
       onDrop={drop}
     >
-      <div className="filters">
-        {SHORTCUTS.map((shortcut) => (
+      <aside className="places" aria-label="Locais">
+        <strong>Locais</strong>
+        {PLACES.map((place) => (
           <button
-            key={shortcut}
-            className={shortcut === dir ? "filter active" : "filter"}
-            onClick={() => goTo("files", shortcut)}
+            key={place.path}
+            className={place.path === dir ? "place active" : "place"}
+            onClick={() => goTo("files", place.path)}
           >
-            {shortcut === "/" ? "Raiz" : shortcut.slice(1)}
+            {place.icon} {place.label}
           </button>
         ))}
         <button
-          className="filter filesTrash"
+          className="place placeTrash"
           onClick={() => setDialog({ type: "trash" })}
         >
           {icons.remove} Lixeira
         </button>
-      </div>
+      </aside>
 
-      <div className="filesBar">
-        <nav className="crumbs" aria-label="Caminho">
-          <button onClick={() => goTo("files", "/")} aria-label="Raiz">
-            {icons.disk}
-          </button>
-          {crumbs.map((name, index) => (
-            <span key={index}>
-              /
-              <button
-                onClick={() =>
-                  goTo("files", "/" + crumbs.slice(0, index + 1).join("/"))
-                }
-              >
-                {name}
-              </button>
-            </span>
-          ))}
-          {readOnly && listing && <small>somente leitura</small>}
-        </nav>
-        <form
-          className="search"
-          onSubmit={(event) => {
-            event.preventDefault();
-            setResults(null);
-            setSearch(query.trim());
-          }}
-        >
-          <span>{icons.search}</span>
-          <input
-            type="search"
-            aria-label="Filtrar ou buscar"
-            placeholder="Filtrar (Enter busca nas subpastas)"
-            value={query}
-            onChange={(event) => {
-              setQuery(event.target.value);
-              setSearch("");
-              setResults(null);
-            }}
-          />
-        </form>
-      </div>
-
-      <div className="filesBar">
-        <div className="filesActions">
-          <button
-            className="button"
-            disabled={readOnly}
-            onClick={() => inputRef.current?.click()}
-          >
-            {icons.upload} Enviar
-          </button>
-          <button
-            className="button"
-            disabled={readOnly}
-            onClick={() => setDialog({ type: "folder" })}
-          >
-            {icons.newFolder} Nova pasta
-          </button>
-          <button
-            className="button"
-            disabled={readOnly}
-            onClick={() => setDialog({ type: "file" })}
-          >
-            {icons.file} Novo arquivo
-          </button>
-          {clipboard && (
-            <button className="button" disabled={readOnly} onClick={paste}>
-              {icons.paste} Colar ({clipboard.items.length})
+      <div className="filesPanel">
+        <div className="filesTop">
+          <nav className="crumbs" aria-label="Caminho">
+            <button onClick={() => goTo("files", "/")} aria-label="Raiz">
+              {icons.disk}
             </button>
-          )}
-          {chosen.length > 0 && (
-            <>
-              <button
-                className="button"
-                disabled={chosen.every((item) => item.isDir)}
-                onClick={download}
-              >
-                {icons.download} Baixar
-              </button>
-              <button className="button" onClick={() => copy("copy")}>
-                {icons.copy} Copiar
-              </button>
-              <button className="button" onClick={() => copy("move")}>
-                {icons.cut} Recortar
-              </button>
-              {single && (
+            {crumbs.map((name, index) => (
+              <span key={index}>
+                {icons.next}
                 <button
-                  className="button"
-                  onClick={() => setDialog({ type: "rename", item: single })}
+                  className={
+                    index === crumbs.length - 1 ? "current" : undefined
+                  }
+                  onClick={() =>
+                    goTo("files", "/" + crumbs.slice(0, index + 1).join("/"))
+                  }
                 >
-                  {icons.edit} Renomear
+                  {name}
                 </button>
-              )}
-              <button className="button danger" onClick={remove}>
-                {icons.remove} Excluir ({chosen.length})
-              </button>
-            </>
-          )}
-        </div>
-        <div className="filesActions">
-          <select
-            className="button"
-            aria-label="Ordenar por"
-            value={sort}
-            onChange={(event) => setSort(event.target.value as Sort)}
-          >
-            <option value="name">Nome</option>
-            <option value="modified">Mais recentes</option>
-            <option value="size">Maiores</option>
-          </select>
-          <button
-            className={hidden ? "iconButton on" : "iconButton"}
-            aria-pressed={hidden}
-            title="Mostrar ocultos"
-            onClick={() => {
-              writeFlag("homepage-files-hidden", !hidden);
-              setHidden(!hidden);
+              </span>
+            ))}
+            {readOnly && listing && <small>{icons.lock} somente leitura</small>}
+          </nav>
+          <form
+            className="search"
+            onSubmit={(event) => {
+              event.preventDefault();
+              setResults(null);
+              setSearch(query.trim());
             }}
           >
-            {icons.hidden}
-          </button>
-          <button
-            className={grid ? "iconButton on" : "iconButton"}
-            aria-pressed={grid}
-            title="Ver em grade"
-            onClick={() => {
-              writeFlag("homepage-files-grid", !grid);
-              setGrid(!grid);
-            }}
-          >
-            {icons.apps}
-          </button>
+            <span>{icons.search}</span>
+            <input
+              type="search"
+              aria-label="Filtrar ou buscar"
+              placeholder="Filtrar, ou Enter para buscar"
+              value={query}
+              onChange={(event) => {
+                setQuery(event.target.value);
+                setSearch("");
+                setResults(null);
+              }}
+            />
+          </form>
         </div>
+
+        <div
+          className={chosen.length > 0 ? "filesTools choosing" : "filesTools"}
+        >
+          <div className="filesActions">
+            {chosen.length > 0 ? (
+              <>
+                <button
+                  className="iconButton"
+                  title="Limpar seleção"
+                  aria-label="Limpar seleção"
+                  onClick={() => setSelected(new Set())}
+                >
+                  {icons.close}
+                </button>
+                <strong className="chosenCount">
+                  {chosen.length.toLocaleString("pt-BR")}
+                </strong>
+                <button
+                  className="tool"
+                  disabled={chosen.every((item) => item.isDir)}
+                  onClick={download}
+                >
+                  {icons.download} <span>Baixar</span>
+                </button>
+                <button className="tool" onClick={() => copy("copy")}>
+                  {icons.copy} <span>Copiar</span>
+                </button>
+                <button className="tool" onClick={() => copy("move")}>
+                  {icons.cut} <span>Recortar</span>
+                </button>
+                {single && (
+                  <button
+                    className="tool"
+                    onClick={() => setDialog({ type: "rename", item: single })}
+                  >
+                    {icons.edit} <span>Renomear</span>
+                  </button>
+                )}
+                <button className="tool danger" onClick={remove}>
+                  {icons.remove} <span>Excluir</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  className="button primary"
+                  disabled={readOnly}
+                  onClick={() => inputRef.current?.click()}
+                >
+                  {icons.upload} <span>Enviar</span>
+                </button>
+                <button
+                  className="tool"
+                  disabled={readOnly}
+                  onClick={() => setDialog({ type: "folder" })}
+                >
+                  {icons.newFolder} <span>Nova pasta</span>
+                </button>
+                <button
+                  className="tool"
+                  disabled={readOnly}
+                  onClick={() => setDialog({ type: "file" })}
+                >
+                  {icons.newFile} <span>Novo arquivo</span>
+                </button>
+                {clipboard && (
+                  <button
+                    className="tool accent"
+                    disabled={readOnly}
+                    onClick={paste}
+                  >
+                    {icons.paste} <span>Colar ({clipboard.items.length})</span>
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+          <div className="filesOptions">
+            <select
+              className={grid ? "sortSelect always" : "sortSelect"}
+              aria-label="Ordenar por"
+              value={sort.key}
+              onChange={(event) => {
+                const key = event.target.value as SortKey;
+                setSort({ key, reverse: key !== "name" });
+              }}
+            >
+              <option value="name">Nome</option>
+              <option value="modified">Recentes</option>
+              <option value="size">Maiores</option>
+            </select>
+            <button
+              className={hidden ? "iconButton on" : "iconButton"}
+              aria-pressed={hidden}
+              title="Mostrar ocultos"
+              onClick={() => {
+                writeFlag("homepage-files-hidden", !hidden);
+                setHidden(!hidden);
+              }}
+            >
+              {icons.hidden}
+            </button>
+            <button
+              className="iconButton"
+              aria-pressed={grid}
+              aria-label="Ver em grade"
+              title={grid ? "Ver em lista" : "Ver em grade"}
+              onClick={() => {
+                writeFlag("homepage-files-grid", !grid);
+                setGrid(!grid);
+              }}
+            >
+              {grid ? icons.list : icons.apps}
+            </button>
+          </div>
+        </div>
+
+        {error && (
+          <p className="error filesMessage" role="alert">
+            {error}
+          </p>
+        )}
+        {results?.partial && (
+          <p className="filesMessage">
+            A busca parou no limite. Seja mais específico.
+          </p>
+        )}
+
+        {(searching ? results : listing) ? (
+          <FileView
+            key={`${dir}|${search}|${grid}`}
+            items={items}
+            grid={grid}
+            selected={selected}
+            showParent={searching}
+            sort={sort}
+            onSort={sortBy}
+            onSelect={select}
+            onToggle={toggle}
+            onToggleAll={toggleAll}
+            onOpen={open}
+          />
+        ) : (
+          !error && (
+            <p className="message">
+              {searching ? "Procurando..." : "Carregando..."}
+            </p>
+          )
+        )}
+
+        <footer className="filesStatus">
+          {chosen.length > 0
+            ? `Selecionado: ${summary(chosen)}`
+            : summary(items) || "Pasta vazia"}
+        </footer>
+
+        <Activity
+          jobs={shownJobs}
+          uploads={uploads.uploads}
+          onCancelUpload={uploads.cancel}
+          onClear={() => {
+            uploads.clear();
+            setJobsCleared(Math.max(0, ...jobs.map((job) => job.id)));
+          }}
+        />
       </div>
 
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
+      {dragging && !readOnly && (
+        <div className="dropHint">
+          {icons.upload}
+          <strong>Solte para enviar</strong>
+          <span>{dir}</span>
+        </div>
       )}
-      {results?.partial && (
-        <p>A busca parou no limite. Seja mais específico.</p>
-      )}
-
-      {(searching ? results : listing) ? (
-        <FileView
-          key={`${dir}|${search}|${grid}`}
-          items={items}
-          grid={grid}
-          selected={selected}
-          showParent={searching}
-          onSelect={select}
-          onToggle={toggle}
-          onOpen={open}
-        />
-      ) : (
-        !error && (
-          <p className="message">
-            {searching ? "Procurando..." : "Carregando..."}
-          </p>
-        )
-      )}
-
-      <Activity
-        jobs={shownJobs}
-        uploads={uploads.uploads}
-        onCancelUpload={uploads.cancel}
-        onClear={() => {
-          uploads.clear();
-          setJobsCleared(Math.max(0, ...jobs.map((job) => job.id)));
-        }}
-      />
 
       <input
         ref={inputRef}

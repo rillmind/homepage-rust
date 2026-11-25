@@ -65,8 +65,22 @@ export default function Monitor({ stats }: { stats: Stats | null }) {
         title="Rede"
         color="sky"
         header={net?.name}
-        value={net ? `${icons.down} ${formatRate(net.rx)}` : undefined}
-        details={net ? `${icons.up} ${formatRate(net.tx)}` : ""}
+        value={
+          net ? (
+            <>
+              {icons.down} {formatRate(net.rx)}
+            </>
+          ) : undefined
+        }
+        details={
+          net ? (
+            <>
+              {icons.up} {formatRate(net.tx)}
+            </>
+          ) : (
+            ""
+          )
+        }
         percent={
           net?.speed
             ? ((Math.max(net.rx, net.tx) * 8) / (net.speed * 1e6)) * 100
