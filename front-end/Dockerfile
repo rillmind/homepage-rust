@@ -7,5 +7,6 @@ RUN bun run build
 
 FROM docker.io/library/nginx:stable-alpine
 COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+ENV LISTEN=5173 BACKEND=127.0.0.1:2306
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 EXPOSE 5173

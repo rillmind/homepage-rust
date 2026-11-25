@@ -3,23 +3,32 @@ services:
     build: ./back-end
     # Rede do host: é dela que vêm o IP, o tráfego e as portas dos serviços.
     network_mode: host
-    # Dono do ./data. No podman rootless, 0 é o seu usuário; no docker, use APP_UID=1000.
+    # Quem acessa os arquivos. No docker, 0 é o root da máquina, com acesso a tudo, e
+    # APP_UID=1000 limita ao seu usuário. No podman rootless, 0 já é o seu usuário.
     user: "${APP_UID:-0}"
+    # O SELinux não deixa um container ler os arquivos do host.
+    security_opt:
+      - label=disable
     environment:
-      DISK_PATH: /host-root
+      FILES_ROOT: /host
+      DISK_PATH: /host
+      READ_ONLY_PATHS: ${READ_ONLY_PATHS-/DATA/AppData}
       CPU_FAN_PATH: ${CPU_FAN_PATH:-}
     volumes:
-      # Um arquivo da raiz do host basta para medir o disco, sem expor o resto.
-      - /etc/hostname:/host-root:ro
+      # rslave: discos montados depois também aparecem.
+      - /:/host:rslave
       # Data e hora no fuso do host.
       - /etc/localtime:/etc/localtime:ro
-      - ./data:/data:Z
+      - ./data:/data
     restart: unless-stopped
 
   front-end:
     build: ./front-end
-    # Publica a porta 5173 e repassa /api para o back em 127.0.0.1:2306.
+    # Repassa /homepage-api para o back em 127.0.0.1:2306.
     network_mode: host
+    environment:
+      # Para aceitar só um IP, como o do Tailscale: LISTEN=100.x.y.z:5173
+      LISTEN: ${LISTEN:-5173}
     depends_on:
       - back-end
     restart: unless-stopped

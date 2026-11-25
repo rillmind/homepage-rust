@@ -6,7 +6,7 @@ RUN cargo build --release --locked
 
 FROM docker.io/library/debian:trixie-slim
 COPY --from=build /app/target/release/homepage-back-end /usr/local/bin/
-USER nobody
-ENV DATA_PATH=/data/services.json
+
+ENV DATA_DIR=/data
 EXPOSE 2306
 CMD ["homepage-back-end"]
