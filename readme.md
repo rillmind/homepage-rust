@@ -38,7 +38,7 @@ pessoal, feito do jeito que eu quero usar e também para estudar Rust e React. �
 - Login com usuário único, criado no primeiro acesso
 - CPU, memória, disco, temperatura, fan e rede em tempo real
 - Serviços cadastrados à mão ou importados do CasaOS, com busca, filtros e status da porta
-- Iniciar e reiniciar o contêiner do serviço com o botão direito, com o erro e o log se falhar
+- Iniciar, reiniciar e atualizar o contêiner do serviço com o botão direito, com o erro e o log se falhar
 - Gerenciador de arquivos: enviar, baixar, copiar, mover, renomear, lixeira, busca,
   miniaturas, visualização e edição de texto
 - Página Network com todas as interfaces
@@ -79,7 +79,7 @@ container. **No docker, o padrão é root.**
 | GET, POST  | `/services`        | lista e cria serviços                             |
 | PUT, DELETE| `/services/{id}`   | edita e exclui                                    |
 | GET        | `/services/{id}/container` | contêiner do serviço e se está rodando    |
-| POST       | `/services/{id}/start` ou `/restart` | inicia ou reinicia o contêiner  |
+| POST       | `/services/{id}/start`, `/restart` ou `/update` | controla o contêiner |
 | GET        | `/services/status` | status das portas dos serviços, por id            |
 | GET        | `/probe/{porta}`   | testa uma porta da máquina                        |
 | GET        | `/casaos/apps`     | apps instalados pelo CasaOS                       |
@@ -136,6 +136,12 @@ docker compose up -d
 ```
 
 Para atualizar: `docker compose pull && docker compose up -d`.
+
+### Atualizar serviços
+
+"Atualizar serviço" faz `docker compose pull` e `up -d` no projeto todo, por um contêiner temporário
+da imagem `docker:cli` (baixada no primeiro uso). Só vale para o que foi criado com o Compose, e é
+recusado se faltar alguma variável do compose.
 
 ### Como app (PWA)
 
