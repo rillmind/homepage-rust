@@ -1,0 +1,27 @@
+.auth {
+  display: grid;
+  place-items: center;
+
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.authCard {
+  display: grid;
+  gap: 1rem;
+
+  width: min(24rem, 100%);
+  padding: 2rem;
+  border: 1px solid var(--ctp-surface0);
+  border-radius: 12px;
+
+  background-color: var(--ctp-mantle);
+}
+
+.authCard h1 {
+  font-size: 1.2rem;
+}
+
+.authCard > p:not(.error) {
+  color: var(--ctp-subtext0);
+}

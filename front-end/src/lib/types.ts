@@ -38,3 +38,35 @@ export type ServiceInput = {
 export type Service = ServiceInput & { id: number };
 
 export type Status = { online: boolean; ms: number | null };
+
+export type CasaApp = Omit<ServiceInput, "category">;
+
+export type AuthStatus = { username: string | null; authenticated: boolean };
+
+export type Entry = {
+  name: string;
+  isDir: boolean;
+  isLink: boolean;
+  size: number;
+  modified: number;
+};
+
+export type Found = Entry & { path: string };
+
+export type Listing = { path: string; readOnly: boolean; entries: Entry[] };
+
+export type Trashed = {
+  id: string;
+  original: string;
+  deleted: number;
+  isDir: boolean;
+};
+
+export type Job = {
+  id: number;
+  label: string;
+  state: "waiting" | "running" | "done" | "failed" | "cancelled";
+  error: string | null;
+  done: number;
+  total: number;
+};

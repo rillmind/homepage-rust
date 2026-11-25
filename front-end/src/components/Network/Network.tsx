@@ -23,7 +23,11 @@ export default function Network({ stats }: { stats: Stats | null }) {
             <dd>{item.ips.join("\n") || "--"}</dd>
             <dt>Link</dt>
             <dd>
-              {!item.up ? "Desconectado" : item.speed ? `${item.speed} Mbps` : "Conectado"}
+              {!item.up
+                ? "Desconectado"
+                : item.speed
+                  ? `${item.speed} Mbps`
+                  : "Conectado"}
             </dd>
             <dt>{icons.down} Download</dt>
             <dd>{formatRate(item.rx)}</dd>

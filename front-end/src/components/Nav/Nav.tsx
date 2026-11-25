@@ -8,9 +8,18 @@ type Props = {
   stats: Stats | null;
   onSearch: () => void;
   onSettings: () => void;
+  onLogout: () => void;
+  username: string;
 };
 
-export default function Nav({ title, stats, onSearch, onSettings }: Props) {
+export default function Nav({
+  title,
+  stats,
+  onSearch,
+  onSettings,
+  onLogout,
+  username,
+}: Props) {
   const uptime = stats?.uptime;
 
   return (
@@ -46,6 +55,14 @@ export default function Nav({ title, stats, onSearch, onSettings }: Props) {
           aria-label="Configurações"
         >
           {icons.settings} <span>Configurações</span>
+        </button>
+        <button
+          className="iconButton"
+          onClick={onLogout}
+          title={`Sair (${username})`}
+          aria-label="Sair"
+        >
+          {icons.logout}
         </button>
       </div>
     </header>

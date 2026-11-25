@@ -1,21 +1,20 @@
 import { icons } from "../../lib/icons";
 import type { Stats } from "../../lib/types";
+import { goTo, type View } from "../../lib/useHash";
 import "./Sidebar.css";
-
-export type View = "overview" | "network";
 
 const ITEMS: { view: View; label: string; icon: string }[] = [
   { view: "overview", label: "Overview", icon: icons.overview },
+  { view: "files", label: "Arquivos", icon: icons.folder },
   { view: "network", label: "Network", icon: icons.network },
 ];
 
 type Props = {
   selected: View;
-  onSelect: (view: View) => void;
   stats: Stats | null;
 };
 
-export default function Sidebar({ selected, onSelect, stats }: Props) {
+export default function Sidebar({ selected, stats }: Props) {
   return (
     <nav className="sidebar">
       {ITEMS.map(({ view, label, icon }) => (
@@ -23,7 +22,7 @@ export default function Sidebar({ selected, onSelect, stats }: Props) {
           key={view}
           className={view === selected ? "sidebarItem active" : "sidebarItem"}
           aria-current={view === selected ? "page" : undefined}
-          onClick={() => onSelect(view)}
+          onClick={() => goTo(view)}
         >
           <span>{icon}</span> {label}
         </button>

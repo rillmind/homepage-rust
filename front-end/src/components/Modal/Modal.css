@@ -13,6 +13,14 @@
   width: min(46rem, calc(100vw - 2rem));
 }
 
+.modal.full {
+  width: calc(100vw - 2rem);
+}
+
+.modalHeader h2 {
+  overflow-wrap: anywhere;
+}
+
 .modal::backdrop {
   background-color: rgb(0 0 0 / 60%);
   backdrop-filter: blur(6px);

@@ -6,7 +6,16 @@ export const CATEGORIES = [
   "Ferramentas",
 ];
 
-const COLORS = ["sky", "red", "peach", "blue", "yellow", "pink", "green", "teal"];
+const COLORS = [
+  "sky",
+  "red",
+  "peach",
+  "blue",
+  "yellow",
+  "pink",
+  "green",
+  "teal",
+];
 
 /** Cor fixa por categoria, também para as criadas pelo usuário. */
 export function categoryColor(category: string) {

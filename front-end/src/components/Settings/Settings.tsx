@@ -1,4 +1,5 @@
 import { useState, type SubmitEvent } from "react";
+import { changePassword, errorText } from "../../lib/api";
 import { formatUptime } from "../../lib/format";
 import { icons } from "../../lib/icons";
 import {
@@ -17,6 +18,7 @@ import "./Settings.css";
 const TABS = [
   { id: "general", label: "Geral", icon: icons.settings },
   { id: "network", label: "Rede & IP", icon: icons.network },
+  { id: "account", label: "Conta", icon: icons.lock },
   { id: "apps", label: "Aplicativos", icon: icons.apps },
   { id: "about", label: "Sobre", icon: icons.info },
 ] as const;
@@ -54,7 +56,7 @@ export default function Settings({
         title="Configurações do Servidor"
         subtitle="Preferências da homepage neste navegador"
         icon={icons.settings}
-        wide
+        size="wide"
         onClose={onClose}
       >
         <div className="settings">
@@ -134,6 +136,8 @@ export default function Settings({
               </dl>
             )}
 
+            {tab === "account" && <PasswordForm />}
+
             {tab === "apps" &&
               (list.length === 0 ? (
                 <p className="message">Nenhum serviço cadastrado.</p>
@@ -184,5 +188,54 @@ export default function Settings({
         />
       )}
     </>
+  );
+}
+
+function PasswordForm() {
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [message, setMessage] = useState("");
+
+  const submit = async (event: SubmitEvent) => {
+    event.preventDefault();
+    try {
+      await changePassword(current, next);
+      setCurrent("");
+      setNext("");
+      setMessage("Senha trocada. As outras sessões foram encerradas.");
+    } catch (error) {
+      setMessage(errorText(error));
+    }
+  };
+
+  return (
+    <form className="settingsForm" onSubmit={submit}>
+      <label className="field">
+        <span>Senha atual</span>
+        <input
+          type="password"
+          required
+          autoComplete="current-password"
+          value={current}
+          onChange={(e) => setCurrent(e.target.value)}
+        />
+      </label>
+      <label className="field">
+        <span>Nova senha (mínimo de 6 caracteres)</span>
+        <input
+          type="password"
+          required
+          minLength={6}
+          maxLength={200}
+          autoComplete="new-password"
+          value={next}
+          onChange={(e) => setNext(e.target.value)}
+        />
+      </label>
+      <p role="status">{message}</p>
+      <div className="modalFooter">
+        <button className="button primary">Trocar senha</button>
+      </div>
+    </form>
   );
 }

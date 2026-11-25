@@ -1,0 +1,340 @@
+.files {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  height: calc(100vh - 7.5rem);
+  min-height: 26rem;
+  border-radius: 10px;
+}
+
+.files.dragging {
+  outline: 2px dashed var(--ctp-mauve);
+  outline-offset: 6px;
+}
+
+.filesTrash {
+  margin-left: auto;
+}
+
+.filesBar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem 1rem;
+}
+
+.filesActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+
+  font-size: 0.8rem;
+}
+
+.filesActions .button {
+  padding: 0.35rem 0.7rem;
+}
+
+.iconButton.on {
+  color: var(--ctp-mauve);
+  background-color: var(--ctp-surface0);
+}
+
+.crumbs {
+  flex: 1;
+
+  min-width: 10rem;
+
+  overflow-wrap: anywhere;
+}
+
+.crumbs button {
+  padding: 0.1rem 0.35rem;
+  border-radius: 6px;
+}
+
+.crumbs button:hover {
+  background-color: var(--ctp-surface0);
+}
+
+.crumbs small {
+  margin-left: 0.5rem;
+
+  color: var(--ctp-yellow);
+}
+
+.fileView {
+  overflow: auto;
+  flex: 1;
+
+  min-height: 10rem;
+  border: 1px solid var(--ctp-surface0);
+  border-radius: 10px;
+
+  background-color: var(--ctp-mantle);
+}
+
+.fileList,
+.fileGrid {
+  display: grid;
+}
+
+.file {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  min-width: 0;
+  padding: 0 1rem;
+
+  cursor: default;
+  user-select: none;
+}
+
+.file:hover {
+  background-color: var(--ctp-base);
+}
+
+.file.selected {
+  background-color: var(--ctp-surface0);
+}
+
+.file input {
+  accent-color: var(--ctp-mauve);
+}
+
+.fileIcon {
+  flex: none;
+
+  width: 1.2rem;
+
+  color: var(--ctp-subtext0);
+  text-align: center;
+}
+
+.fileIcon.kind-folder {
+  color: var(--ctp-blue);
+}
+
+.fileIcon.kind-image {
+  color: var(--ctp-green);
+}
+
+.fileIcon.kind-video {
+  color: var(--ctp-peach);
+}
+
+.fileIcon.kind-audio {
+  color: var(--ctp-pink);
+}
+
+.fileIcon.kind-pdf {
+  color: var(--ctp-red);
+}
+
+.fileName {
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileName:hover {
+  text-decoration: underline;
+}
+
+.fileMeta,
+.fileSize {
+  overflow: hidden;
+  flex: none;
+
+  font-size: 0.75rem;
+  color: var(--ctp-subtext0);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileMeta {
+  max-width: 40%;
+  margin-left: auto;
+}
+
+.fileSize {
+  width: 5.5rem;
+
+  text-align: right;
+}
+
+.fileGrid .file {
+  position: relative;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.4rem;
+
+  padding: 0.5rem;
+  border-radius: 8px;
+}
+
+.fileGrid .file input {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+}
+
+.fileGrid .fileIcon {
+  display: grid;
+  place-items: center;
+
+  width: 100%;
+  height: 92px;
+
+  font-size: 2.6rem;
+}
+
+.fileGrid .fileIcon img {
+  max-width: 100%;
+  max-height: 92px;
+  border-radius: 6px;
+
+  object-fit: contain;
+}
+
+.fileGrid .fileName {
+  max-width: 100%;
+
+  font-size: 0.75rem;
+}
+
+.activity {
+  overflow: auto;
+  flex: none;
+
+  max-height: 11rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--ctp-surface0);
+  border-radius: 10px;
+
+  font-size: 0.8rem;
+  background-color: var(--ctp-mantle);
+}
+
+.activity header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.activity header .button {
+  padding: 0.1rem 0.6rem;
+}
+
+.activityRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem 0.75rem;
+
+  padding: 0.25rem 0;
+}
+
+.activityRow .progress {
+  flex-basis: 100%;
+}
+
+.activityLabel {
+  overflow: hidden;
+  flex: 1;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview {
+  display: grid;
+  place-items: center;
+
+  height: calc(100vh - 13rem);
+  padding: 1rem;
+}
+
+.preview :is(img, video) {
+  max-width: 100%;
+  max-height: calc(100vh - 15rem);
+}
+
+.preview iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.previewFooter {
+  padding: 0 1.25rem 1rem;
+}
+
+a.button {
+  color: inherit;
+  text-decoration: none;
+}
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  width: 100%;
+  height: 100%;
+}
+
+.editor textarea {
+  flex: 1;
+
+  padding: 0.75rem;
+  border: 1px solid var(--ctp-surface0);
+  border-radius: 8px;
+
+  font: inherit;
+  color: inherit;
+  background-color: var(--ctp-crust);
+  resize: none;
+}
+
+.editor .modalFooter {
+  align-items: center;
+}
+
+.trash {
+  display: grid;
+  gap: 0.6rem;
+
+  padding: 1.25rem;
+}
+
+.trashItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  min-width: 0;
+}
+
+.trashPath {
+  overflow: hidden;
+  flex: 1;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .fileMeta {
+    display: none;
+  }
+
+  .fileSize {
+    margin-left: auto;
+  }
+}

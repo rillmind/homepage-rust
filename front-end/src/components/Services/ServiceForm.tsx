@@ -60,7 +60,10 @@ export default function ServiceForm({
     event.preventDefault();
     const { name, icon, protocol, category, description } = form;
     run(() =>
-      onSave({ name, icon, protocol, port, category, description }, service?.id),
+      onSave(
+        { name, icon, protocol, port, category, description },
+        service?.id,
+      ),
     );
   };
 

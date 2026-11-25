@@ -8,9 +8,9 @@ export default defineConfig({
   server: {
     // Mesma origem em desenvolvimento, como o nginx faz em produção.
     proxy: {
-      "/api": {
+      "/homepage-api": {
         target: "http://127.0.0.1:2306",
-        rewrite: (path) => path.replace(/^\/api/, ""),
+        rewrite: (path) => path.replace(/^\/homepage-api/, ""),
       },
     },
   },

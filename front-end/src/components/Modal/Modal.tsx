@@ -6,7 +6,7 @@ type Props = {
   title: string;
   subtitle: string;
   icon: string;
-  wide?: boolean;
+  size?: "wide" | "full";
   onClose: () => void;
   children: ReactNode;
 };
@@ -16,7 +16,7 @@ export default function Modal({
   title,
   subtitle,
   icon,
-  wide,
+  size,
   onClose,
   children,
 }: Props) {
@@ -31,7 +31,7 @@ export default function Modal({
   return (
     <dialog
       ref={ref}
-      className={wide ? "modal wide" : "modal"}
+      className={`modal ${size ?? ""}`}
       aria-label={title}
       onCancel={(event) => {
         if (event.target !== event.currentTarget) return;

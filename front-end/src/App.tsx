@@ -1,23 +1,16 @@
 import { useEffect, useState } from "react";
-import Monitor from "./components/Monitor/Monitor";
-import Nav from "./components/Nav/Nav";
-import Network from "./components/Network/Network";
-import Services from "./components/Services/Services";
-import { useServices } from "./components/Services/useServices";
-import Settings from "./components/Settings/Settings";
-import Sidebar, { type View } from "./components/Sidebar/Sidebar";
-import { getStats } from "./lib/api";
+import Auth from "./components/Auth/Auth";
+import Home from "./Home";
+import { getAuth, logout, SESSION_LOST } from "./lib/api";
 import { loadSettings, storeSettings } from "./lib/settings";
-import { usePolling } from "./lib/usePolling";
-import "./App.css";
+import type { AuthStatus } from "./lib/types";
+
+const RETRY_INTERVAL = 3000;
 
 export default function App() {
   const [settings, setSettings] = useState(loadSettings);
-  const [view, setView] = useState<View>("overview");
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [searchRequest, setSearchRequest] = useState(0);
-  const stats = usePolling(getStats, settings.interval * 1000);
-  const services = useServices();
+  const [auth, setAuth] = useState<AuthStatus | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     document.documentElement.className = settings.theme;
@@ -25,51 +18,53 @@ export default function App() {
     storeSettings(settings);
   }, [settings]);
 
-  const openSearch = () => {
-    setView("overview");
-    setSearchRequest((n) => n + 1);
-  };
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let active = true;
+    const load = () =>
+      getAuth().then(
+        (status) => active && setAuth(status),
+        () => {
+          if (active) timer = setTimeout(load, RETRY_INTERVAL);
+        },
+      );
+    load();
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [attempt]);
 
   useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      const combo = (event.ctrlKey || event.metaKey) && event.key === "k";
-      if (!combo || document.querySelector("dialog[open]")) return;
-      event.preventDefault();
-      setView("overview");
-      setSearchRequest((n) => n + 1);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    const onLost = () =>
+      setAuth((status) => status && { ...status, authenticated: false });
+    window.addEventListener(SESSION_LOST, onLost);
+    return () => window.removeEventListener(SESSION_LOST, onLost);
   }, []);
 
-  return (
-    <div className="app">
-      <Nav
+  if (auth === null) return <p className="message">Conectando...</p>;
+
+  if (!auth.authenticated) {
+    return (
+      <Auth
         title={settings.title}
-        stats={stats}
-        onSearch={openSearch}
-        onSettings={() => setSettingsOpen(true)}
+        username={auth.username}
+        onDone={() => setAttempt((n) => n + 1)}
       />
-      <Sidebar selected={view} onSelect={setView} stats={stats} />
-      <main>
-        {view === "overview" ? (
-          <>
-            <Monitor stats={stats} />
-            <Services {...services} searchRequest={searchRequest} />
-          </>
-        ) : (
-          <Network stats={stats} />
-        )}
-      </main>
-      {settingsOpen && (
-        <Settings
-          settings={settings}
-          onSave={setSettings}
-          onClose={() => setSettingsOpen(false)}
-          stats={stats}
-          services={services}
-        />
-      )}
-    </div>
+    );
+  }
+
+  const leave = async () => {
+    await logout().catch(() => undefined);
+    setAttempt((n) => n + 1);
+  };
+
+  return (
+    <Home
+      settings={settings}
+      onSettings={setSettings}
+      username={auth.username ?? ""}
+      onLogout={leave}
+    />
   );
 }

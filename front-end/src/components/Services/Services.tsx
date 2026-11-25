@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { normalize } from "../../lib/format";
 import { icons } from "../../lib/icons";
 import type { Service } from "../../lib/types";
+import CasaImport from "./CasaImport";
 import ServiceCard from "./ServiceCard";
 import ServiceForm from "./ServiceForm";
 import type { ServicesState } from "./useServices";
@@ -19,6 +20,7 @@ export default function Services({
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<string | null>(null);
   const [editing, setEditing] = useState<Service | "new" | null>(null);
+  const [importing, setImporting] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -72,6 +74,12 @@ export default function Services({
             </button>
           ))}
         </div>
+        <button
+          className="button importButton"
+          onClick={() => setImporting(true)}
+        >
+          {icons.import} Importar do CasaOS
+        </button>
       </section>
 
       {services.length > 0 && visible.length === 0 && (
@@ -87,12 +95,23 @@ export default function Services({
             onEdit={() => setEditing(item)}
           />
         ))}
-        <button className="service serviceAdd" onClick={() => setEditing("new")}>
+        <button
+          className="service serviceAdd"
+          onClick={() => setEditing("new")}
+        >
           <span className="serviceIcon">{icons.add}</span>
           <strong>Adicionar Serviço</strong>
           <span>Conectar novo contêiner ou porta</span>
         </button>
       </section>
+
+      {importing && (
+        <CasaImport
+          services={services}
+          onSave={save}
+          onClose={() => setImporting(false)}
+        />
+      )}
 
       {editing && (
         <ServiceForm
