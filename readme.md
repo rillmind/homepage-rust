@@ -50,8 +50,8 @@ pessoal, feito do jeito que eu quero usar e também para estudar Rust e React. �
 └──────────────┘        JSON         └───────────────────┘
 ```
 
-O front chama `/homepage-api` na própria origem, repassado ao back pelo nginx (ou pelo Vite
-em desenvolvimento). O back só escuta em `127.0.0.1` e não libera CORS.
+Em produção é uma imagem só, de uns 5 MB: o binário serve a API em `/homepage-api` e os
+arquivos do front. Em desenvolvimento, o Vite repassa `/homepage-api` para o back.
 
 ### Segurança
 
@@ -59,7 +59,7 @@ Quem entra tem acesso aos arquivos da máquina inteira, com as permissões do us
 container. **No docker, o padrão é root.**
 
 - Crie a conta logo depois de subir: até lá, quem abrir a página primeiro pode criá-la.
-- Não há HTTPS. Use pelo Tailscale e, de preferência, só nele: `LISTEN=<ip do tailscale>:5173`.
+- O servidor não faz HTTPS: use o `tailscale serve` (abaixo) e não exponha a porta na internet.
 - Esqueceu a senha? Apague `data/auth.json` e reinicie o back para cadastrar de novo.
 - São somente leitura: `/proc`, `/sys`, `/dev`, `/run` e `/DATA/AppData`. As pastas da raiz,
   como `/etc`, não podem ser movidas nem excluídas, mas o que está dentro delas pode.
@@ -87,9 +87,9 @@ container. **No docker, o padrão é root.**
 | `DATA_DIR`     | back  | pasta dos dados; por padrão, `data`                                  |
 | `FILES_ROOT`   | back  | onde a máquina está montada; por padrão, `/`                         |
 | `READ_ONLY_PATHS` | back | pastas protegidas, separadas por `:`; por padrão, `/DATA/AppData` |
-| `LISTEN`       | front | porta ou `ip:porta` do nginx; por padrão, `5173`                     |
-| `APP_UID`      | compose | usuário do back; por padrão, `0`                                   |
-| `BIND_ADDR`    | back  | endereço do back; por padrão, `127.0.0.1:2306`                       |
+| `LISTEN`       | back  | porta ou `ip:porta`; na imagem, `5173`; fora dela, `127.0.0.1:2306`  |
+| `FRONT_DIR`    | back  | arquivos do front para servir; sem ela, só a API                     |
+| `APP_UID`      | compose | usuário do container; por padrão, `0`                                   |
 
 ## Rodando
 
@@ -116,27 +116,43 @@ make restart
 Também dá para controlar cada parte separadamente com `make run-back`,
 `make stop-front` etc.
 
-### Com podman
+### No servidor, com docker
 
-Usa o `podman-compose`. O `podman compose` também serve, mas pode delegar ao docker-compose,
-que exige `systemctl --user start podman.socket`.
+Baixe o `docker-compose.yaml`, crie um `.env` e suba a imagem pronta do Docker Hub:
 
 ```sh
-podman-compose up --build -d   # front em http://localhost:5173
-podman-compose logs -f
-podman-compose down            # os serviços ficam em data/services.json
+mkdir -p homepage/data && cd homepage
+curl -O https://raw.githubusercontent.com/rillmind/homepage-rust/main/docker-compose.yaml
+echo 'LISTEN=127.0.0.1:5173' > .env   # só o tailscale serve acessa
+docker compose up -d
 ```
 
-Para atualizar, rode `podman-compose down` antes do `up --build -d`: com o container no ar, o
+Para atualizar: `docker compose pull && docker compose up -d`.
+
+### Como app (PWA)
+
+Navegadores baseados em Chromium só instalam apps de páginas com HTTPS. O Tailscale fornece:
+
+```sh
+sudo tailscale serve --bg 5173
+```
+
+Abra o endereço `https://<máquina>.<tailnet>.ts.net` que ele mostrar e use "Instalar app".
+
+### Com podman, compilando
+
+```sh
+podman-compose up --build -d   # http://localhost:5173
+podman-compose down
+```
+
+Para atualizar, rode o `down` antes do `up --build -d`: com o container no ar, o
 `podman-compose` gera a imagem nova, mas continua usando a antiga.
 
-No docker, para acessar todos os arquivos:
+### CI
 
-```sh
-docker compose up --build -d   # ou APP_UID=1000, para só os do seu usuário
-```
-
-Use um arquivo `.env` para fixar `APP_UID` e `LISTEN`.
+Todo push na `main` roda os testes e, se passarem, publica `softfrost/homepage-rust` no Docker
+Hub. Precisa da variável `DOCKERHUB_USERNAME` e do secret `DOCKERHUB_TOKEN` no repositório.
 
 ### Serviços
 
@@ -150,14 +166,16 @@ make test   # testes e clippy do back, build e lint do front
 ```
 
 Para conferir o funcionamento, rode `make run`, consulte um endpoint com
-`curl http://localhost:2306/auth/status` e abra o endereço do Vite.
+`curl http://localhost:2306/homepage-api/auth/status` e abra o endereço do Vite.
 
 ## Estrutura
 
 ```
 homepage-rust/
 ├── Makefile              orquestra back e front
-├── docker-compose.yaml   sobe tudo com podman
+├── Dockerfile            imagem única, com back e front
+├── docker-compose.yaml   sobe com docker ou podman
+├── .github/workflows/    testes e publicação da imagem
 ├── back-end/src/
 │   ├── main.rs           servidor HTTP e desligamento
 │   ├── auth/             conta, senha e sessões
